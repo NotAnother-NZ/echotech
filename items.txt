@@ -1,0 +1,205 @@
+[{
+        "id": "item1",
+        "name": "CRT TV or CRT Monitor",
+        "price": 40,
+        "weight": 24
+    },
+    {
+        "id": "item2",
+        "name": "LCD or Plasma",
+        "price": 20,
+        "weight": 9
+    },
+    {
+        "id": "item3",
+        "name": "Monitor or Touchscreen",
+        "price": 0,
+        "weight": 2
+    },
+    {
+        "id": "item4",
+        "name": "Modem",
+        "price": 0,
+        "weight": 1
+    },
+    {
+        "id": "item5",
+        "name": "Switch or Router",
+        "price": 0,
+        "weight": 2
+    },
+    {
+        "id": "item6",
+        "name": "Server",
+        "price": 0,
+        "weight": 5
+    },
+    {
+        "id": "item7",
+        "name": "Thin Client",
+        "price": 0,
+        "weight": 2
+    },
+    {
+        "id": "item8",
+        "name": "Microwave or Small Oven",
+        "price": 5,
+        "weight": 5
+    },
+    {
+        "id": "item9",
+        "name": "Stereo Equipment",
+        "price": 5,
+        "weight": 5
+    },
+    {
+        "id": "item10",
+        "name": "Other Small Appliances",
+        "price": 5,
+        "weight": 2
+    },
+    {
+        "id": "item11",
+        "name": "Household Batteries per KG",
+        "price": 5,
+        "weight": 1
+    },
+    {
+        "id": "item12",
+        "name": "Lead-acid or Car Battery",
+        "price": 0,
+        "weight": 49
+    },
+    {
+        "id": "item13",
+        "name": "UPS Battery",
+        "price": 0,
+        "weight": 1
+    },
+    {
+        "id": "item14",
+        "name": "Kitchen Oven",
+        "price": 20,
+        "weight": 49
+    },
+    {
+        "id": "item15",
+        "name": "Dishwasher or Laundry",
+        "price": 20,
+        "weight": 49
+    },
+    {
+        "id": "item16",
+        "name": "Single-door Fridge or Freezer",
+        "price": 40,
+        "weight": 49
+    },
+    {
+        "id": "item17",
+        "name": "Double-door Fridge, Freezer or Chest Freezer",
+        "price": 90,
+        "weight": 51
+    },
+    {
+        "id": "item18",
+        "name": "Wiring",
+        "price": 0,
+        "weight": 1
+    },
+    {
+        "id": "item19",
+        "name": "Cable or Extension Lead",
+        "price": 0,
+        "weight": 1
+    },
+    {
+        "id": "item20",
+        "name": "Power Board or Charger",
+        "price": 0,
+        "weight": 1
+    },
+    {
+        "id": "item21",
+        "name": "Small Inkjet or Laser Printer",
+        "price": 10,
+        "weight": 5
+    },
+    {
+        "id": "item22",
+        "name": "Large Photocopier",
+        "price": 60,
+        "weight": 51
+    },
+    {
+        "id": "item23",
+        "name": "Toner or Ink",
+        "price": 3,
+        "weight": 1
+    },
+    {
+        "id": "item24",
+        "name": "Medium Printer or Photocopier",
+        "price": 30,
+        "weight": 9
+    },
+    {
+        "id": "item25",
+        "name": "Mobile Phone",
+        "price": 0,
+        "weight": 1
+    },
+    {
+        "id": "item26",
+        "name": "Tablet",
+        "price": 0,
+        "weight": 1
+    },
+    {
+        "id": "item27",
+        "name": "Handheld Computer",
+        "price": 0,
+        "weight": 1
+    },
+    {
+        "id": "item28",
+        "name": "IP or Landline Phone",
+        "price": 3,
+        "weight": 1
+    },
+    {
+        "id": "item29",
+        "name": "Desktop PC",
+        "price": 0,
+        "weight": 2
+    },
+    {
+        "id": "item30",
+        "name": "Laptop",
+        "price": 0,
+        "weight": 1
+    },
+    {
+        "id": "item31",
+        "name": "Computer Component",
+        "price": 0,
+        "weight": 1
+    },
+    {
+        "id": "item32",
+        "name": "Keyboard",
+        "price": 3,
+        "weight": 1
+    },
+    {
+        "id": "item33",
+        "name": "Scanner or Fax Machine",
+        "price": 10,
+        "weight": 1
+    },
+    {
+        "id": "item34",
+        "name": "USB or Removable Hard Drive",
+        "price": 0,
+        "weight": 1
+    }
+]
