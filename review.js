@@ -208,7 +208,7 @@ $(document).ready(function () {
       } else {
         if (formDataObj["Data-Erasure-Needed"] === "No") {
           $("#bac-para").text(
-            "Please confirm your booking and contact details below, and weÃ¢â‚¬â„¢ll be in touch to discuss options and pricing for your booking."
+            "Please confirm your booking and contact details below, and we\u2019ll be in touch to discuss options and pricing for your booking."
           );
 
           let reviewContactDetails =
@@ -330,7 +330,7 @@ $(document).ready(function () {
           });
         } else {
           $("#bac-para").text(
-            "You have selected our data erasure services. As the pricing for this service is POA, please confirm your booking and contact details below, and weÃ¢â‚¬â„¢ll be in touch to discuss options and pricing for your booking."
+            "You have selected our data erasure services. As the pricing for this service is POA, please confirm your booking and contact details below, and we\u2019ll be in touch to discuss options and pricing for your booking."
           );
 
           let reviewContactDetails =
