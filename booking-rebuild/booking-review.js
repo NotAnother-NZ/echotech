@@ -146,6 +146,54 @@
   const ATTEMPTED_KEY = 'echo:receipt-attempted:v2';
   const $ = id => document.getElementById(id);
   let draft, payload, prepared, stripe, elements, processing = false;
+  let checkoutGuardActive = false;
+  let paymentVerified = false;
+  let paymentOutcomeUnclear = false;
+
+  const PAGE_WARNING = 'Please keep this page open until your payment and booking confirmation are complete. Closing or refreshing it early may delay your confirmation.';
+  const PROCESSING_WARNING = 'Your payment is being processed. Please do not close or refresh this page until your booking has been confirmed.';
+  const RECEIPT_WARNING = 'Payment received. We are finalising your booking with Echo. Please keep this page open.';
+  const UNRESOLVED_WARNING = 'We are still verifying your payment or booking. Please do not attempt another payment or close this page until the status is confirmed.';
+
+  // Browser-generated confirmation only. Browsers do not permit custom text
+  // and cannot guarantee this event, particularly on mobile.
+  function warnBeforeUnload(event) {
+    event.preventDefault();
+    event.returnValue = true; // Legacy browser support.
+  }
+  function setCheckoutGuard(active) {
+    if (checkoutGuardActive === active) return;
+    checkoutGuardActive = active;
+    if (active) window.addEventListener('beforeunload',warnBeforeUnload);
+    else window.removeEventListener('beforeunload',warnBeforeUnload);
+  }
+  function setupPaymentGuidance() {
+    if ($('echo-booking-payment-guidance')) return;
+    const wrapper = $('card-element')?.closest('[id="payment-wrapper"]');
+    if (!wrapper) return;
+    const note = document.createElement('p');
+    note.id = 'echo-booking-payment-guidance';
+    note.className = 'body2 forest-green opacity-70';
+    note.setAttribute('role','status');
+    note.setAttribute('aria-live','polite');
+    note.style.marginTop = '1rem';
+    note.textContent = PAGE_WARNING;
+    wrapper.insertAdjacentElement('afterend',note);
+  }
+  function paymentGuidance(value = PAGE_WARNING) {
+    const note = $('echo-booking-payment-guidance');
+    if (!note) return;
+    note.textContent = value;
+    note.hidden = isCommercial();
+  }
+  function markPaymentVerified() {
+    paymentVerified = true;
+    show('bac-pay',false);
+    show('bac-submit',true);
+    const label = $('bac-submit')?.querySelector('.title7');
+    if (label) label.textContent = 'Complete booking confirmation';
+    paymentGuidance(RECEIPT_WARNING);
+  }
   const show = (id,yes) => { if ($(id)) $(id).style.display = yes ? '' : 'none'; };
   const content = (id,value) => { if ($(id)) $(id).textContent = value ?? ''; };
   const money = cents => '$' + (Number(cents)/100).toFixed(2);
@@ -265,6 +313,8 @@
     show('bac-submit',isCommercial());
     const cardParent=$('card-element')?.closest('[id="payment-wrapper"]');
     if(cardParent) cardParent.style.display=isCommercial()?'none':'';
+    setupPaymentGuidance();
+    paymentGuidance();
   }
 
   function receiptFields() {
@@ -336,29 +386,50 @@
       throw new Error('The native Webflow receipt helper is unavailable.');
     }
   }
+  function goToConfirmation() {
+    // This navigation is intentional and follows a verified Webflow success,
+    // or a server-confirmed booking. Do not show the leave-page warning here.
+    setCheckoutGuard(false);
+    window.location.assign('/booking-confirmation?booking='+encodeURIComponent(prepared.reference));
+  }
   function redirectConfirmed() {
     sessionStorage.removeItem(ATTEMPTED_KEY);
     sessionStorage.removeItem(PREPARED_KEY);
     sessionStorage.removeItem(DRAFT_KEY);
-    window.location.assign('/booking-confirmation?booking='+encodeURIComponent(prepared.reference));
+    goToConfirmation();
   }
   async function submitReceiptOnce() {
     if (processing) return;
     if (sessionStorage.getItem(ATTEMPTED_KEY)===prepared.reference) {
+      setCheckoutGuard(true);
+      paymentGuidance(UNRESOLVED_WARNING);
       message('Your booking may already have been received by Webflow. Please do not submit again; we are checking its status.');
       return;
     }
     busy(true);
     try {
       ensureWebflowReady();
+      setCheckoutGuard(true);
+      paymentGuidance(paymentVerified ? RECEIPT_WARNING :
+        'We are submitting your booking. Please keep this page open until it is confirmed.');
       sessionStorage.setItem(ATTEMPTED_KEY,prepared.reference);
       await window.EchoBookingNativeReceipt.submitReceipt(receiptFields());
-      // Webflow has displayed its native success state; the signed webhook
-      // will independently confirm the corresponding booking in the backend.
-      window.location.assign('/booking-confirmation?booking='+encodeURIComponent(prepared.reference));
+      // Native Webflow has shown its success state. The signed webhook will
+      // independently confirm the stored booking on the confirmation page.
+      goToConfirmation();
     } catch(error) {
       // A timeout has an unknown outcome: never resubmit blindly.
-      if (!/timed out/i.test(error.message)) sessionStorage.removeItem(ATTEMPTED_KEY);
+      const unknownOutcome = /timed out/i.test(error.message);
+      if (!unknownOutcome) {
+        sessionStorage.removeItem(ATTEMPTED_KEY);
+        setCheckoutGuard(false);
+        paymentGuidance(paymentVerified ?
+          'Your payment was received, but the booking confirmation could not be submitted. Please retry the confirmation below. You will not be charged again.' :
+          'The booking could not be submitted. Please try again.');
+      } else {
+        setCheckoutGuard(true);
+        paymentGuidance(UNRESOLVED_WARNING);
+      }
       message(error.message);
     } finally {busy(false);}
   }
@@ -366,10 +437,18 @@
     for (let attempts=0;attempts<18;attempts++) {
       const status=await getStatus();
       if (status.status === 'confirmed') {redirectConfirmed();return;}
-      if (status.stage === 'receipt_required') {busy(false);await submitReceiptOnce();return;}
+      if (status.stage === 'receipt_required') {
+        markPaymentVerified(); // Never expose the payment button again.
+        busy(false);
+        await submitReceiptOnce();
+        return;
+      }
       await new Promise(resolve=>setTimeout(resolve,1000));
     }
-    message('Your payment may still be processing. Do not pay again. Please refresh this page to check the booking status.');
+    paymentOutcomeUnclear = true; // Disable further payment attempts.
+    setCheckoutGuard(true);
+    paymentGuidance(UNRESOLVED_WARNING);
+    message('We are still checking your payment status. Do not pay again. If you need to refresh, the browser may ask you to confirm leaving; your booking reference will be retained.');
   }
 
   async function initializePayment() {
@@ -409,12 +488,17 @@
       const status=await getStatus();
       if (status.status==='confirmed') {redirectConfirmed();return;}
       if (status.stage==='receipt_required' && !isCommercial()) {
+        markPaymentVerified();
+        setCheckoutGuard(true);
         if (sessionStorage.getItem(ATTEMPTED_KEY)===prepared.reference) {
+          paymentGuidance(UNRESOLVED_WARNING);
           message('Payment was received, and the Webflow receipt is still being checked. Please do not pay again.');
         } else await submitReceiptOnce();
         return;
       }
       if (!isCommercial() && new URLSearchParams(window.location.search).has('payment_return')) {
+        setCheckoutGuard(true);
+        paymentGuidance('We are checking the payment result. Please keep this page open.');
         await waitForPaid();
         return;
       }
@@ -429,26 +513,54 @@
   form.addEventListener('submit',event=>{event.preventDefault();event.stopImmediatePropagation();},true);
   $('bac-pay')?.addEventListener('click',async event=>{
     event.preventDefault();
-    if(processing || !stripe || !elements) return;
-    busy(true);message('');
+    if(processing || checkoutGuardActive || paymentOutcomeUnclear || paymentVerified ||
+        !stripe || !elements) return;
+    busy(true); message('');
     try {
       ensureWebflowReady();
       const submitted=await elements.submit();
       if(submitted.error) throw new Error(submitted.error.message || 'Please review your payment details.');
+      // Start protecting only once card details pass initial validation
+      // and Stripe is about to process the payment.
+      setCheckoutGuard(true);
+      paymentGuidance(PROCESSING_WARNING);
       const result=await stripe.confirmPayment({
         elements,
         confirmParams:{return_url:window.location.origin+'/booking-review?payment_return=1'},
         redirect:'if_required'
       });
-      if(result.error) throw new Error(result.error.message || 'Payment could not be completed.');
+      if(result.error) {
+        // Stripe has explicitly reported a payment error; allow correction
+        // rather than locking the customer behind a leave-page prompt.
+        setCheckoutGuard(false);
+        paymentGuidance();
+        throw new Error(result.error.message || 'Payment could not be completed.');
+      }
       await waitForPaid();
     } catch(error) {
-      message(error.message || 'We were unable to complete the payment.');
-    } finally {busy(false);}
+      if (checkoutGuardActive && !paymentVerified) {
+        // A network error at this point cannot prove that payment failed.
+        // Keep the PaymentIntent and prevent a second charge attempt.
+        paymentOutcomeUnclear = true;
+        paymentGuidance(UNRESOLVED_WARNING);
+        message('Your payment result could not yet be verified. Do not pay again. Please refresh to check your existing booking status. Details: ' +
+          (error.message || 'Payment status unavailable.'));
+      } else {
+        message(error.message || 'We were unable to complete the payment.');
+      }
+    } finally {
+      if (!paymentOutcomeUnclear) busy(false);
+    }
   });
   $('bac-submit')?.addEventListener('click',async event=>{
     event.preventDefault();
-    if(!processing && isCommercial() && prepared) await submitReceiptOnce();
+    if(!processing && (isCommercial() || paymentVerified) && prepared)
+      await submitReceiptOnce();
+  });
+  $('back-to-booking')?.addEventListener('click',event=>{
+    if (!checkoutGuardActive) return;
+    event.preventDefault();
+    message('Your payment or booking confirmation is still being processed. Please keep this page open.');
   });
 
   show('payment-status-wrapper',false);
