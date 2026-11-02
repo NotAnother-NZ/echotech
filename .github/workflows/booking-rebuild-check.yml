@@ -1,0 +1,29 @@
+name: Echo Booking rebuild source checks
+on:
+  pull_request:
+    paths:
+      - 'booking-rebuild/**'
+      - '.github/workflows/booking-rebuild-check.yml'
+  push:
+    branches: ['feature/booking-rebuild-20261102']
+    paths:
+      - 'booking-rebuild/**'
+      - '.github/workflows/booking-rebuild-check.yml'
+permissions:
+  contents: read
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          node --check booking-rebuild/booking.js
+          node --check booking-rebuild/booking-review.js
+          node --check booking-rebuild/booking-confirmation.js
+          node --check booking-rebuild/webflow-native-receipt.js
+          node --check booking-rebuild/booking-review-lite.js
+          node --check booking-rebuild/booking-confirmation-lite.js
