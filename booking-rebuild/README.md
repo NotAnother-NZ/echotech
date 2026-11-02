@@ -22,11 +22,11 @@ Three Webflow pages; **no sitewide booking JavaScript**:
 - A verified Google place ID and independently computed driving route must be used for service-area and shipping validation. Include Auckland, Wellington, Christchurch within an exact 50 km driving limit.
 - Client-side price information is display-only. The payment backend must calculate prices itself from the approved catalogue.
 - The existing Webflow Turnstile and browser extensions are not user-authored elements. Do not duplicate their scripts.
-- Preserve commercial enquiry notifications and residential paid-booking receipts before retiring legacy hidden forms.
+- **Keep native Webflow submissions and notification emails** for all three receipt forms on Page 2. See `WEBFLOW_NATIVE_FORMS.md`; the backend must never replace these with its own email notifications.
 - Confirmation must display a verified success state only for a server-issued opaque reference with a persisted successful booking. Never regard `?respay=true` or a simple redirect as proof of payment.
 
 ## Activation status
 
-The confirmation script is **not ready to load**: it depends on a new `GET /api/v2/bookings/status?reference=...` endpoint which must return `{ "status": "confirmed" | "pending" | "failed" }`. The backend endpoint has not been implemented or deployed. The other two page scripts remain to be built.
+The confirmation script is **not ready to load**: it depends on a new `GET /api/v2/bookings/status?reference=...` endpoint which must return `{ "status": "confirmed" | "pending" | "failed" }`. The backend endpoint has not been implemented or deployed. The other two page scripts remain to be built. `webflow-native-receipt.js` is a staging-only helper that will be bundled into `booking-review.js`; it must not be loaded independently on the live site.
 
 Until backend, payments, receipts and QA are complete, leave all production Webflow embeds unchanged.
