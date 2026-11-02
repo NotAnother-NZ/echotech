@@ -47,6 +47,36 @@ The site currently has **two duplicate** `#payment-wrapper` IDs on Page 2. Fix i
 - Once the native Webflow receipt submission starts, record an in-tab attempt so an uncertain result (timeout/navigation) doesn't silently send a duplicate native email. The server independently confirms only signed Webflow webhook events.
 - If the browser closes after Stripe success before Webflow form submission, a paid-but-unsubmitted booking remains detectable on the backend, **but Webflow cannot guarantee a native notification**. Resolve this reliability limitation before production go-live.
 
+## Payment in-progress warning and browser-close protection
+
+The Review script shows the following customer-facing copy by default:
+
+> Please keep this page open until your payment and booking confirmation are complete. Closing or refreshing it early may delay your confirmation.
+
+For a **Webflow Designer-editable version**, add a text element with ID `echo-booking-payment-guidance` near the payment card/button, with the preferred default copy. The script uses that text as its default. **If the element is absent**, the script inserts its own warning immediately after the card wrapper, without requiring any HTML changes.
+
+- After `Stripe Elements.submit()` validates the card and the script begins `confirmPayment()`, it enables a native `beforeunload` confirmation and updates the on-page text to "Your payment is being processed...".
+- The warning also protects the native Webflow receipt hand-off, when we submit a confirmed/paid booking to Webflow.
+- After server-confirmed payment, the Pay button disappears and the remaining action is **Complete booking confirmation**. A receipt-form failure cannot cause a second charge.
+- A definite payment error removes the warning so the customer can correct payment details. An **ambiguous payment outcome** prevents further payment attempts until status is rechecked, leaving the booking reference intact.
+- The guard is removed before our intentional navigation to Booking Confirmation after Webflow's native success state.
+- **Limit:** browsers cannot be forced to keep a tab open. Modern browsers show their **own generic dialog text**, and may not fire `beforeunload` at all on mobile/app shutdown. This warning is only a mitigation: the Stripe webhook, durable booking record, and receipt reconciliation still matter.
+- The warning does not change the existing Webflow-managed Turnstile or native email configuration.
+
+## Stripe sandbox testing
+
+Existing site code uses live-mode Stripe publishable keys. Test card numbers **must not** be used with the existing live-mode credentials. Use **the same Stripe account's test/sandbox environment**, with matching `sk_test_...` and `pk_test_...` keys scoped to a Vercel Preview or isolated staging deployment. Never configure `ECHO_ALLOW_LIVE_CHARGES` in staging. The backend rejects mismatched test/live keys.
+
+After staging is configured, test these card numbers (future expiry, any three-digit CVC):
+- `4242 4242 4242 4242` — approved payment;
+- `4000 0000 0000 0002` — generic card decline;
+- `4000 0000 0000 3220` — 3D Secure authentication.
+
+Verify the leave-page warning triggers when a customer closes/reloads while a payment is actually being confirmed, but **not** on normal idle state, a definite decline, or deliberate navigation to confirmation. Test Chrome, Safari, Firefox, iOS and Android. The 3D Secure test must verify that any required bank-authentication navigation is not blocked by an unexpected warning.
+
+Official Stripe testing: https://docs.stripe.com/testing
+Browser beforeunload behaviour: https://developer.mozilla.org/en-US/docs/Web/API/Window/beforeunload_event
+
 ## Validation / QA
 Run syntax checks (`node --check booking-rebuild/*.js`) and test in the browser on a **published staging Webflow domain**. Exercise residential, commercial, commercial/data-erasure, Stripe success/3DS/decline, Webflow form rejection, postcode mismatch, 50 km boundary, availability/blackout, reload/back, rapid clicks, mobile, and browser close after payment.
 
