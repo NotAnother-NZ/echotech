@@ -17,7 +17,7 @@
   let collectionType = 'Residential';
   let addressSelection = null;
   let distancePending = false;
-  const state = { items: {} };
+  let commercialVisited = false;
 
   function getDateString(value) {
     const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value || '');
@@ -36,14 +36,16 @@
     if (day === 0 || day === 6) return false;
     const excluded = new Set([...document.querySelectorAll('.disabled-dates')].map(el => el.textContent.trim()));
     if (excluded.has(iso)) return false;
-    const now = new Date(), start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const min = new Date(start);
+    const nzParts = new Intl.DateTimeFormat('en-GB', {timeZone:'Pacific/Auckland', year:'numeric', month:'2-digit', day:'2-digit'}).formatToParts(new Date());
+    const parsed = Object.fromEntries(nzParts.map(p => [p.type, p.value]));
+    const min = new Date(Date.UTC(+parsed.year,+parsed.month-1,+parsed.day,12));
     let counted = 0;
     while (counted < 2) {
       min.setDate(min.getDate() + 1);
-      if (min.getDay() !== 0 && min.getDay() !== 6) counted++;
+      const ymd = min.toISOString().slice(0,10);
+      if (min.getUTCDay() !== 0 && min.getUTCDay() !== 6 && !excluded.has(ymd)) counted++;
     }
-    return date > min;
+    return new Date(iso + 'T12:00:00Z') > min;
   }
 
   function chosenItems() {
@@ -158,12 +160,13 @@
     });
     sessionStorage.setItem(DRAFT_KEY, JSON.stringify({
       version: 2, updatedAt: Date.now(), collectionType, fields,
-      items: chosenItems(), addressSelection
+      items: chosenItems(), addressSelection, commercialVisited
     }));
   }
   function restoreDraft() {
     const draft = readDraft();
     if (!draft) return;
+    commercialVisited = draft.commercialVisited === true || draft.collectionType === 'Commercial';
     Object.entries(draft.fields || {}).forEach(([id, value]) => {
       const el = input(id);
       if (!el || id === 'address' || id === 'distance') return;
@@ -258,7 +261,11 @@
 
   document.querySelectorAll('.quantity[data-item-id]').forEach(el => setQuantity(el, Number(el.textContent.trim()) || 0));
   input('res-form-button')?.addEventListener('click', () => { setType('Residential'); saveDraft(); });
-  input('com-form-button')?.addEventListener('click', () => { setType('Commercial'); saveDraft(); });
+  input('com-form-button')?.addEventListener('click', () => {
+    if (!commercialVisited) input('contact-billing-same-checkbox').checked = true;
+    commercialVisited = true;
+    setType('Commercial'); saveDraft();
+  });
   input('contact-billing-same-checkbox')?.addEventListener('change', () => { setType(collectionType); saveDraft(); });
   input('data-erasure-service-checkbox')?.addEventListener('change', () => {
     input('data-erasure-needed').value = input('data-erasure-service-checkbox').checked ? 'Yes' : 'No';
@@ -272,7 +279,7 @@
       const box = title.closest('.form-product-dropdown');
       const expanded = box.dataset.expanded === 'true';
       box.dataset.expanded = String(!expanded);
-      box.style.height = expanded ? '' : 'auto';
+      box.style.height = expanded ? title.getBoundingClientRect().height + 'px' : 'auto';
       title.querySelector('.form-field-icon.right')?.classList.toggle('rotate', !expanded);
     });
   });
@@ -295,17 +302,24 @@
     saveDraft(); validate();
   });
   form.addEventListener('change', () => { saveDraft(); validate(); });
-  form.addEventListener('submit', event => {
-    event.preventDefault();
-    event.stopImmediatePropagation();
+  const reviewButton = input('review-booking');
+  // Page 1 only saves a draft; it must never send a premature Webflow booking email.
+  form.noValidate = true;
+  if (reviewButton) reviewButton.type = 'button';
+  function proceedToReview() { 
     const errors = validate();
     if (errors.length) {
       input('form-validator-wrapper')?.scrollIntoView({behavior:'smooth',block:'center'});
       return;
     }
     saveDraft();
-    // Stage 2 must require a valid server-verified quote before accepting payment.
     window.location.assign('/booking-review');
+  }
+  reviewButton?.addEventListener('click', proceedToReview);
+  form.addEventListener('submit', event => {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    proceedToReview();
   }, true);
 
   restoreDraft();
