@@ -151,6 +151,7 @@
   let paymentOutcomeUnclear = false;
 
   const PAGE_WARNING = 'Please keep this page open until your payment and booking confirmation are complete. Closing or refreshing it early may delay your confirmation.';
+  let defaultPaymentGuidance = PAGE_WARNING;
   const PROCESSING_WARNING = 'Your payment is being processed. Please do not close or refresh this page until your booking has been confirmed.';
   const RECEIPT_WARNING = 'Payment received. We are finalising your booking with Echo. Please keep this page open.';
   const UNRESOLVED_WARNING = 'We are still verifying your payment or booking. Please do not attempt another payment or close this page until the status is confirmed.';
@@ -168,7 +169,15 @@
     else window.removeEventListener('beforeunload',warnBeforeUnload);
   }
   function setupPaymentGuidance() {
-    if ($('echo-booking-payment-guidance')) return;
+    const existing = $('echo-booking-payment-guidance');
+    if (existing) {
+      // Allows content editors to own the default copy in Webflow Designer.
+      defaultPaymentGuidance = existing.textContent.trim() || PAGE_WARNING;
+      if (!existing.textContent.trim()) existing.textContent = defaultPaymentGuidance;
+      existing.setAttribute('role','status');
+      existing.setAttribute('aria-live','polite');
+      return;
+    }
     const wrapper = $('card-element')?.closest('[id="payment-wrapper"]');
     if (!wrapper) return;
     const note = document.createElement('p');
@@ -180,7 +189,7 @@
     note.textContent = PAGE_WARNING;
     wrapper.insertAdjacentElement('afterend',note);
   }
-  function paymentGuidance(value = PAGE_WARNING) {
+  function paymentGuidance(value = defaultPaymentGuidance) {
     const note = $('echo-booking-payment-guidance');
     if (!note) return;
     note.textContent = value;
