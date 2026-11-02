@@ -44,8 +44,10 @@
       const wrapper = form.closest('.w-form');
       const done = wrapper?.querySelector('.w-form-done');
       const fail = wrapper?.querySelector('.w-form-fail');
-      if (!wrapper || !done || !fail || typeof form.requestSubmit !== 'function') {
-        reject(new Error('Native Webflow form state is unavailable.')); return;
+      if (!wrapper || !done || !fail || typeof form.requestSubmit !== 'function' ||
+          !window.Webflow || typeof window.Webflow.require !== 'function' ||
+          !window.Webflow.require('forms')) {
+        reject(new Error('Native Webflow form processing is unavailable.')); return;
       }
       if (form.getAttribute('action')) {
         reject(new Error('Receipt form has a custom action; Webflow notifications would be bypassed.'));
@@ -77,10 +79,18 @@
       let settled = false;
       let timer;
       let observer;
+      // Native forms in this site use method=GET with no action.
+      // If Webflow fails to intercept, never let the browser navigate with
+      // customer data in a query string. Webflow handlers register earlier.
+      const preventNativeNavigation = event => {
+        if (event.target === form) event.preventDefault();
+      };
+      document.addEventListener('submit',preventNativeNavigation,false);
       const finish = (error) => {
         if (settled) return;
         settled = true;
         observer?.disconnect();
+        document.removeEventListener('submit',preventNativeNavigation,false);
         window.clearTimeout(timer);
         delete form.dataset.echoReceiptPending;
         if (error) reject(error);
@@ -260,7 +270,7 @@
   function receiptFields() {
     const totalQuantity = prepared.items.reduce((sum,line)=>sum+line.quantity,0);
     const common = {
-      'Collection-Address':prepared.address+', '+prepared.postcode,
+      'Collection-Address':prepared.address.includes(prepared.postcode) ? prepared.address : prepared.address+', '+prepared.postcode,
       'Collection-Instruction':payload.instructions,
       'Collection-Dates':prepared.preferredDates.join(', '),
       'Total-Items':String(totalQuantity),
