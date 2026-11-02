@@ -455,6 +455,7 @@
       await new Promise(resolve=>setTimeout(resolve,1000));
     }
     paymentOutcomeUnclear = true; // Disable further payment attempts.
+    busy(true);
     setCheckoutGuard(true);
     paymentGuidance(UNRESOLVED_WARNING);
     message('We are still checking your payment status. Do not pay again. If you need to refresh, the browser may ask you to confirm leaving; your booking reference will be retained.');
