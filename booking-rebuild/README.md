@@ -16,7 +16,13 @@ Page 2: `#bac-form-wrapper-review`, `#review-contact-details`, `#item-summary-wr
 Page 3: `#text-header-top h1`, `#redirect-text`.
 
 ## Backend contract
-New Vercel backend: `https://echo-stripe-logic.vercel.app/api/v2`. On the feature branch, it is gated by `ECHO_BOOKING_V2_ENABLED`, allowed origins, a separate Neon DB, a Places/Routes server key, and Stripe **test** credentials. Until this backend is deployed to a safe preview with its required env vars, the scripts will **not work**. Do not point staging Webflow at an incomplete production backend.
+New Vercel backend: `https://echo-stripe-logic.vercel.app/api/v2`. On the feature branch, it is gated by `ECHO_BOOKING_V2_ENABLED`, allowed origins, a separate Neon DB, a Places/Routes server key, and Stripe **test** credentials. Until this backend is deployed to a safe preview with its required env vars, the scripts will **not work**.
+
+**Preview testing (no production risk):** Configure the exact Preview backend URL on both staging page elements, using the Webflow Designer's custom attributes:
+- Review page `#bac-form-wrapper-review` → `data-echo-booking-api="https://<preview-backend-host>/api/v2"`
+- Confirmation page `#page-wrapper` → the exact **same** `data-echo-booking-api` URL
+
+The scripts require an HTTPS origin with the path `/api/v2`. If the attribute is missing they retain the eventual production endpoint; if malformed they **fail closed** rather than silently using production. The URL is public configuration, never a Stripe secret. Add the corresponding staging Webflow origin to the backend `ECHO_ALLOWED_ORIGINS` list and create the appropriate signed webhook endpoints for the Preview URL. Never use the production payment backend when running dummy-card tests.
 
 Critical validation (prices, weights, driving distances, customer fields) occurs on the server. A displayed `distance` or `total` from Page 1 cannot authorize Stripe charges.
 
