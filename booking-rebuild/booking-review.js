@@ -140,7 +140,21 @@
   if (form.dataset.echoReviewInitialized === 'true') return;
   form.dataset.echoReviewInitialized = 'true';
 
-  const API = 'https://echo-stripe-logic.vercel.app/api/v2';
+  // Page-scoped staging override; define data-echo-booking-api on the
+  // #bac-form-wrapper-review element to use an isolated Preview backend.
+  // Leave it absent for the eventual production backend.
+  const apiAttribute = document.getElementById('bac-form-wrapper-review')
+    ?.getAttribute('data-echo-booking-api');
+  const API = (() => {
+    if (!apiAttribute) return 'https://echo-stripe-logic.vercel.app/api/v2';
+    try {
+      const url = new URL(apiAttribute);
+      if (url.protocol === 'https:' && !url.username && !url.password &&
+          url.pathname.replace(/\/$/,'') === '/api/v2' && !url.search && !url.hash)
+        return url.origin + '/api/v2';
+    } catch (_error) { /* Rejected below. */ }
+    return null; // Fail closed; never silently fall back to a live backend.
+  })();
   const DRAFT_KEY = 'echo:new-booking:v2';
   const PREPARED_KEY = 'echo:prepared-booking:v2';
   const ATTEMPTED_KEY = 'echo:receipt-attempted:v2';
@@ -260,6 +274,7 @@
     });
   }
   async function request(path,method='GET',data) {
+    if (!API) throw new Error('Invalid booking service URL on the Review page.');
     const response = await fetch(API+path,{
       method,mode:'cors',credentials:'omit',cache:'no-store',
       headers:data ? {'Content-Type':'application/json'} : {},
