@@ -356,7 +356,7 @@
     for (let attempts=0;attempts<18;attempts++) {
       const status=await getStatus();
       if (status.status === 'confirmed') {redirectConfirmed();return;}
-      if (status.stage === 'receipt_required') {await submitReceiptOnce();return;}
+      if (status.stage === 'receipt_required') {busy(false);await submitReceiptOnce();return;}
       await new Promise(resolve=>setTimeout(resolve,1000));
     }
     message('Your payment may still be processing. Do not pay again. Please refresh this page to check the booking status.');
@@ -402,6 +402,10 @@
         if (sessionStorage.getItem(ATTEMPTED_KEY)===prepared.reference) {
           message('Payment was received, and the Webflow receipt is still being checked. Please do not pay again.');
         } else await submitReceiptOnce();
+        return;
+      }
+      if (!isCommercial() && new URLSearchParams(window.location.search).has('payment_return')) {
+        await waitForPaid();
         return;
       }
       if (!isCommercial()) await initializePayment();
