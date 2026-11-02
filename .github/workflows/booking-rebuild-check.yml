@@ -24,3 +24,6 @@ jobs:
           node --check booking-rebuild/booking.js
           node --check booking-rebuild/booking-review.js
           node --check booking-rebuild/booking-confirmation.js
+          node --check booking-rebuild/webflow-native-receipt.js
+          node --check booking-rebuild/booking-review-lite.js
+          node --check booking-rebuild/booking-confirmation-lite.js
