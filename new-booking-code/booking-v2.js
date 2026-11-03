@@ -1,6 +1,6 @@
 $(document).ready(function () {
   //if #bac-form-wrapper is available
-  copyTimes = 0;
+  let copyTimes = 0;
   if ($("#bac-form-wrapper-new").length) {
     /*
      *
@@ -395,7 +395,9 @@ $(document).ready(function () {
         console.error("Unable to calculate item quote:",error.message);
         alert("We couldn't calculate the selected items. Please try again.");
       } finally {
-        selected.forEach(line => line.counter.find(".counter-add, .counter-sub").removeClass("disable"));
+        if (requestId === activeItemQuote) {
+          selected.forEach(line => line.counter.find(".counter-add, .counter-sub").removeClass("disable"));
+        }
       }
     }
 
@@ -544,6 +546,8 @@ $(document).ready(function () {
     $("#address").on("input", function () {
       selectedPlaceId = "";
       sessionStorage.removeItem(PLACE_ID_STORAGE_KEY);
+      ++activeDistanceRequest;
+      clearDistanceAndQuote();
     });
 
     function processPlaceSelection(place) {
@@ -1287,9 +1291,13 @@ $(document).ready(function () {
      *
      */
 
-    Webflow.push(function () {
-      // Disable submitting form fields during development
-      $("#bac-main-form").submit(function () {
+    {
+      // First page stores a draft; prevent Webflow from sending a premature
+      // native form submission (and duplicating any resulting automation).
+      const bookingForm = document.getElementById("bac-main-form");
+      bookingForm.addEventListener("submit", function (event) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
         //set the text of #bac-title to "Processing..."
         $("#bac-title").text("Processing...");
 
@@ -1347,8 +1355,8 @@ $(document).ready(function () {
         // Optionally, redirect to a review page or handle the data in another way
         window.location.href = "/booking-review"; // Change this to your review page URL
         return false;
-      });
-    });
+      }, true);
+    }
 
     /*
      *
