@@ -299,7 +299,12 @@ $(document).ready(function () {
 
     //go through all the .quantity elements, and give them an attribute of data-item-id starting from item1
     $(".quantity").each(function (index) {
-      $(this).attr("data-item-id", "item" + (index + 1));
+      // Preserve item IDs supplied by Webflow; use the original positional
+      // fallback only for older layouts without explicit item identifiers.
+      const declaredId = $(this).attr("data-item-id");
+      if (!/^item(?:[1-9]|[12][0-9]|3[0-4])$/.test(declaredId || "")) {
+        $(this).attr("data-item-id", "item" + (index + 1));
+      }
     });
 
     // Initialize total cost and weight
@@ -531,8 +536,15 @@ $(document).ready(function () {
       processPlaceSelection(autocomplete.getPlace());
     });
 
+    const PLACE_ID_STORAGE_KEY = "echo:booking-place-id:v2";
+    let selectedPlaceId = sessionStorage.getItem(PLACE_ID_STORAGE_KEY) || "";
+    $("#address").on("input", function () {
+      selectedPlaceId = "";
+      sessionStorage.removeItem(PLACE_ID_STORAGE_KEY);
+    });
+
     function processPlaceSelection(place) {
-      if (!place.geometry) {
+      if (!place || !place.geometry) {
         // alert("Selected place does not have a geometry.");
         alert(
           "Please select your address from the Google Maps suggestions dropdown."
@@ -558,6 +570,14 @@ $(document).ready(function () {
         $("#post-code").val(postcode);
       }
 
+      if (!place.place_id) {
+        alert("Please select your address from the Google Maps suggestions dropdown.");
+        $("#address").val("");
+        $("#post-code").val("");
+        return;
+      }
+      selectedPlaceId = place.place_id;
+      sessionStorage.setItem(PLACE_ID_STORAGE_KEY, selectedPlaceId);
       calculateAndDisplayDistance(place.geometry.location);
     }
 
@@ -1259,6 +1279,44 @@ $(document).ready(function () {
 
         // Store formData in sessionStorage or handle as needed
         sessionStorage.setItem("formData", JSON.stringify(formData));
+
+        // The existing form remains unchanged; provide a structured draft
+        // for server-verified pricing and Stripe checkout on the Review page.
+        const fields = {};
+        $("#bac-main-form").find("input, select, textarea").each(function () {
+          if (!this.id) return;
+          fields[this.id] = this.type === "checkbox" || this.type === "radio"
+            ? this.checked === true
+            : this.value;
+        });
+        const items = [];
+        $(".form-product-option-counter.selected").each(function () {
+          const quantityEl = $(this).find(".quantity");
+          const id = quantityEl.attr("data-item-id");
+          const quantity = Number(quantityEl.text());
+          if (/^item(?:[1-9]|[12][0-9]|3[0-4])$/.test(id || "") &&
+              Number.isSafeInteger(quantity) && quantity > 0) {
+            items.push({ id, quantity });
+          }
+        });
+        const collectionType = $("#collection-type").val();
+        const draft = {
+          version: 2,
+          collectionType,
+          fields,
+          items,
+          addressSelection: {
+            placeId: selectedPlaceId || sessionStorage.getItem(PLACE_ID_STORAGE_KEY)
+          }
+        };
+        // Never manufacture missing address or item selections.
+        if (!draft.addressSelection.placeId || !items.length ||
+            !["Residential", "Commercial"].includes(collectionType)) {
+          alert("Please select a valid collection address and at least one item.");
+          $("#bac-title").text("Book A Collection");
+          return false;
+        }
+        sessionStorage.setItem("echo:new-booking:v2", JSON.stringify(draft));
 
         // Optionally, redirect to a review page or handle the data in another way
         window.location.href = "/booking-review"; // Change this to your review page URL
