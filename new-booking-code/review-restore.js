@@ -192,7 +192,7 @@
   function nativeFormReady(){
     const {formId,fields}=receiptFields(),receipt=$(formId);
     if(!receipt||!receipt.closest('.w-form')||receipt.getAttribute('action')||
-       receipt.hasAttribute('redirect')||receipt.hasAttribute('data-redirect'))
+       Boolean(receipt.getAttribute('redirect'))||Boolean(receipt.getAttribute('data-redirect')))
       throw Error('The existing Webflow receipt form redirect/action must be cleared on staging.');
     for(const key of Object.keys(fields)){
       if(!receipt.elements.namedItem(key))throw Error('Missing native Webflow receipt field: '+key);
