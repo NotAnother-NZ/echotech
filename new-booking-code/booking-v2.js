@@ -544,23 +544,39 @@
      *
      */
 
-    var addressInput = document.getElementById("address");
-    var autocomplete = new google.maps.places.Autocomplete(addressInput, {
-      componentRestrictions: {
-        country: "nz",
-      }, // Restrict autocomplete to New Zealand
-    });
+    const addressInput = document.getElementById("address");
+    let selectedFromAutocomplete = false;
+    let autocompleteInitialized = false;
 
-    var selectedFromAutocomplete = false;
-
-    autocomplete.addListener("place_changed", function () {
-      selectedFromAutocomplete = true;
-      processPlaceSelection(autocomplete.getPlace());
-    });
+    function initializeAddressAutocomplete() {
+      if (autocompleteInitialized) return true;
+      if (!window.google?.maps?.places?.Autocomplete || !addressInput) return false;
+      const autocomplete = new google.maps.places.Autocomplete(addressInput, {
+        componentRestrictions: { country: "nz" },
+        fields: ["address_components", "geometry", "place_id", "formatted_address"]
+      });
+      autocomplete.addListener("place_changed", function () {
+        selectedFromAutocomplete = true;
+        processPlaceSelection(autocomplete.getPlace());
+      });
+      autocompleteInitialized = true;
+      return true;
+    }
+    if (!initializeAddressAutocomplete()) {
+      const mapStarted = Date.now();
+      const mapRetry = window.setInterval(function () {
+        if (initializeAddressAutocomplete()) window.clearInterval(mapRetry);
+        else if (Date.now() - mapStarted > 10000) {
+          window.clearInterval(mapRetry);
+          console.error("[Echo Booking] Google Places Autocomplete is unavailable.");
+        }
+      }, 250);
+    }
 
     const PLACE_ID_STORAGE_KEY = "echo:booking-place-id:v2";
     let selectedPlaceId = sessionStorage.getItem(PLACE_ID_STORAGE_KEY) || "";
     $("#address").on("input", function () {
+      selectedFromAutocomplete = false;
       selectedPlaceId = "";
       sessionStorage.removeItem(PLACE_ID_STORAGE_KEY);
       ++activeDistanceRequest;
@@ -588,7 +604,7 @@
       }
 
       var postcode = extractPostcodeFromAddressComponents(
-        place.address_components
+        place.address_components || []
       );
       if (postcode) {
         $("#post-code").val(postcode);
@@ -611,9 +627,9 @@
      * Google Distance Matrix values are in metres, not rounded kilometres.
      */
     const collectionCatchments = [
-      { name: "Auckland", location: new google.maps.LatLng(-36.9249524, 174.8192662) },
-      { name: "Wellington", location: new google.maps.LatLng(-41.2370845, 174.9130315) },
-      { name: "Christchurch", location: new google.maps.LatLng(-43.5320544, 172.6362254) }
+      { name: "Auckland", location: { lat:-36.9249524, lng:174.8192662 } },
+      { name: "Wellington", location: { lat:-41.2370845, lng:174.9130315 } },
+      { name: "Christchurch", location: { lat:-43.5320544, lng:172.6362254 } }
     ];
     let activeDistanceRequest = 0;
 
@@ -646,6 +662,10 @@
     function calculateAndDisplayDistance(origin) {
       const requestId = ++activeDistanceRequest;
       clearDistanceAndQuote();
+      if (!window.google?.maps?.DistanceMatrixService) {
+        console.error("[Echo Booking] Google driving-distance service unavailable.");
+        return;
+      }
       const service = new google.maps.DistanceMatrixService();
       service.getDistanceMatrix(
         {
@@ -721,18 +741,11 @@
     }
 
     function isLocationInNewZealand(place) {
-      for (var i = 0; i < place.address_components.length; i++) {
-        var addressComponent = place.address_components[i];
-        for (var j = 0; j < addressComponent.types.length; j++) {
-          if (
-            addressComponent.types[j] === "country" &&
-            addressComponent.short_name !== "NZ"
-          ) {
-            return false;
-          }
-        }
-      }
-      return true;
+      const components = Array.isArray(place.address_components) ? place.address_components : [];
+      return components.some(function (part) {
+        return Array.isArray(part.types) &&
+          part.types.includes("country") && part.short_name === "NZ";
+      });
     }
 
     // Note: No longer needed as we use the Distance Matrix API now
