@@ -59,7 +59,7 @@
     //hide #data-erasure-needed by default
     $("#data-erasure-needed").hide();
     //remove clicked class from #data-erasure-service-checkbox by default
-    $("#data-erasure-service-checkbox").removeClass("clicked");
+    $("#data-erasure-service-checkbox").prop("checked", false).trigger("change");
     //set the text of #contact-details-title to "Contact Details" by default
     $("#contact-details-title").text("Contact Details");
     //show #contact-details by default
@@ -86,7 +86,7 @@
     $("#business-contact-details").hide();
     $("#contact-billing-same").hide();
     //uncheck #contact-billing-same-checkbox by default - by removing .clicked class from it
-    $("#contact-billing-same-checkbox").removeClass("clicked");
+    $("#contact-billing-same-checkbox").prop("checked", false).trigger("change");
     //set #bac-contact-first-name, #bac-contact-surname, #bac-contact-email-address, #bac-contact-phone to not required
     $("#bac-contact-first-name").prop("required", false);
     $("#bac-contact-surname").prop("required", false);
@@ -129,7 +129,7 @@
       //set the value of #data-erasure-needed to "No"
       $("#data-erasure-needed").val("No");
       //remove .clicked class from #data-erasure-service-checkbox
-      $("#data-erasure-service-checkbox").removeClass("clicked");
+      $("#data-erasure-service-checkbox").prop("checked", false).trigger("change");
       //set the text of #contact-details-title to "Contact Details"
       $("#contact-details-title").text("Contact Details");
       //show #contact-details
@@ -156,7 +156,7 @@
       $("#shipping-note-wrapper").show();
 
       //uncheck #contact-billing-same-checkbox - by removing .clicked class from it
-      $("#contact-billing-same-checkbox").removeClass("clicked");
+      $("#contact-billing-same-checkbox").prop("checked", false).trigger("change");
       //set #bac-contact-first-name, #bac-contact-surname, #bac-contact-email-address, #bac-contact-phone to not required
       $("#bac-contact-first-name").prop("required", false);
       $("#bac-contact-surname").prop("required", false);
@@ -193,7 +193,7 @@
       //set the value of #data-erasure-needed to "No"
       $("#data-erasure-needed").val("No");
       //remove .clicked class from #data-erasure-service-checkbox
-      $("#data-erasure-service-checkbox").removeClass("clicked");
+      $("#data-erasure-service-checkbox").prop("checked", false).trigger("change");
       //set the text of #contact-details-title to "Business & Contact Details"
       $("#contact-details-title").text("Business & Contact Details");
       //hide #contact-details
@@ -220,9 +220,7 @@
       $("#business-contact-details").hide();
       $("#contact-billing-same").show();
       //remove clicked class from #contact-billing-same-checkbox
-      $("#contact-billing-same-checkbox").removeClass("clicked");
-      //simulate a click on #contact-billing-same-checkbox
-      $("#contact-billing-same-checkbox").click();
+      $("#contact-billing-same-checkbox").prop("checked", true).trigger("change");
       //set #bac-company-name, #bac-company-size, #bac-business-sector, #bac-billing-first-name, #bac-billing-surname, #bac-billing-email-address, #bac-billing-phone to required
       $("#bac-company-name").prop("required", true);
       $("#bac-company-size").prop("required", true);
@@ -251,50 +249,25 @@
     });
 
     //if #contact-billing-same-checkbox is clicked, toggle the .clicked class on it
-    $("#contact-billing-same-checkbox").click(function () {
-      $(this).toggleClass("clicked");
-      //check if #contact-billing-same-checkbox has the .clicked class, if so hide #business-contact-details, otherwise show it
-      if ($(this).hasClass("clicked")) {
-        $("#business-contact-details").hide();
-        //set #bac-contact-first-name, #bac-contact-surname, #bac-contact-email-address, #bac-contact-phone to not required
-        $("#bac-contact-first-name").prop("required", false);
-        $("#bac-contact-surname").prop("required", false);
-        $("#bac-contact-email-address").prop("required", false);
-        $("#bac-contact-phone").prop("required", false);
-      } else {
-        $("#business-contact-details").show();
-        //set #bac-contact-first-name, #bac-contact-surname, #bac-contact-email-address, #bac-contact-phone to required
-        $("#bac-contact-first-name").prop("required", true);
-        $("#bac-contact-surname").prop("required", true);
-        $("#bac-contact-email-address").prop("required", true);
-        $("#bac-contact-phone").prop("required", true);
-      }
+    function updateCheckboxAppearance(input) {
+      const el = $(input), checked = Boolean(input.checked);
+      el.toggleClass("clicked", checked);
+      el.closest(".w-checkbox").find(".w-checkbox-input")
+        .toggleClass("w--redirected-checked", checked);
+    }
+    $("#contact-billing-same-checkbox").on("change", function () {
+      updateCheckboxAppearance(this);
+      const separate = !this.checked;
+      $("#business-contact-details").toggle(separate);
+      $("#bac-contact-first-name, #bac-contact-surname, #bac-contact-email-address, #bac-contact-phone")
+        .prop("required", separate);
     });
-
-    //if #data-erasure-service-checkbox is clicked, toggle the .clicked class on it
-    $("#data-erasure-service-checkbox").click(function () {
-      $(this).toggleClass("clicked");
-      //check if #data-erasure-service-checkbox has the .clicked class, if so set the value of #data-erasure-needed to "Yes", otherwise set it to "No"
-      if ($(this).hasClass("clicked")) {
-        $("#data-erasure-needed").val("Yes");
-        //set the text of #bac-submit to "Confirm Booking"
-        // $("#bac-submit").val("Confirm Booking");
-        //show #bac-submit and hide #bac-pay
-        $("#bac-submit").show();
-        $("#bac-pay").hide();
-      } else {
-        $("#data-erasure-needed").val("No");
-        //set the text of #bac-submit to "Complete Payment"
-        // $("#bac-submit").val("Complete Payment");
-        //hide #bac-submit and show #bac-pay
-        $("#bac-submit").hide();
-        $("#bac-pay").show();
-      }
+    $("#data-erasure-service-checkbox").on("change", function () {
+      updateCheckboxAppearance(this);
+      $("#data-erasure-needed").val(this.checked ? "Yes" : "No");
     });
-
-    //if #bac-terms-and-conditions-checkbox is clicked, toggle the .clicked class on it
-    $("#bac-terms-and-conditions-checkbox").click(function () {
-      $(this).toggleClass("clicked");
+    $("#bac-terms-and-conditions-checkbox").on("change", function () {
+      updateCheckboxAppearance(this);
     });
 
     /*
@@ -1126,6 +1099,15 @@
       },
     ];
 
+    function applicableFields(type) {
+      if (type === "Residential") return fieldsResidential;
+      return $("#contact-billing-same-checkbox").is(":checked")
+        ? fieldsCommercial.filter(function (field) {
+            return !field.id.startsWith("bac-contact-");
+          })
+        : fieldsCommercial;
+    }
+
     function generateValidationMessage(type, incompleteFields) {
       let baseMessage = `Note: To help us process your ${type.toLowerCase()} request efficiently, please make sure to complete `;
       const fieldDescriptions = {
@@ -1307,8 +1289,7 @@
         $("#collection-type").val() === "Residential"
           ? "Residential"
           : "Commercial";
-      const fields =
-        type === "Residential" ? fieldsResidential : fieldsCommercial;
+      const fields = applicableFields(type);
       validateFields(fields, type); // Now solely responsible for updating the UI based on validation
     }, 250);
 
@@ -1331,6 +1312,12 @@
         $("#bac-title").text("Processing...");
 
         // Serialize the form data or manually gather the data
+        const currentType = $("#collection-type").val() === "Commercial"
+          ? "Commercial" : "Residential";
+        const requiredFields = applicableFields(currentType);
+        if (validateFields(requiredFields, currentType) !== requiredFields.length) {
+          return false;
+        }
         var formData = $(this).serializeArray(); // Example serialization
 
         // Store formData in sessionStorage or handle as needed
