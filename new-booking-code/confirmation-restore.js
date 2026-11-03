@@ -78,7 +78,7 @@
     if(timer)clearInterval(timer);
   },{once:true});
   verify();
-}  }
+  }
   window.Webflow=window.Webflow||[];
   window.Webflow.push(initializeConfirmation);
   if(document.readyState==='complete')initializeConfirmation();
