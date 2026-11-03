@@ -470,6 +470,10 @@
       }
     });
 
+    // Bulk links must not navigate to '#', which jumps the page.
+    $(".bulk-counter-10, .bulk-counter-25, .bulk-counter-50")
+      .on("click.echoBookingLink",function (event) { event.preventDefault(); });
+
     //do the same but for .bulk-counter-25
     $(".bulk-counter-25").click(function () {
       var quantity = parseInt(
@@ -745,7 +749,9 @@
       });
 
       //if any of the .form-product-dropdown-title elements are clicked, update the height of the .form-product-dropdown element by adding the outer height of .form-product-dropdown-title and .form-product-dropdown-options inside of it, otherwise return back to the height of .form-product-dropdown-title
-      $(".form-product-dropdown-title").click(function () {
+      $(".form-product-dropdown-title")
+        .off("click.echoBookingDropdown")
+        .on("click.echoBookingDropdown", function () {
         var dropdown = $(this).closest(".form-product-dropdown");
         var dropdownOptions = dropdown.find(".form-product-dropdown-options");
 
@@ -1382,71 +1388,63 @@
      *
      */
 
-    var storedFormData = sessionStorage.getItem("formData");
-    if (storedFormData) {
-      var formData = JSON.parse(storedFormData);
+    // Restore the real structured draft, not simulated dropdown/button clicks
+    // or a series of timeouts that can race the price API.
+    (function restoreBookingDraft() {
+      let draft;
+      try {
+        draft = JSON.parse(sessionStorage.getItem("echo:new-booking:v2") || "null");
+      } catch {
+        sessionStorage.removeItem("echo:new-booking:v2");
+        return;
+      }
+      if (!draft || draft.version !== 2 || !draft.fields ||
+          !Array.isArray(draft.items)) return;
 
-      formData.forEach(function (item) {
-        var input = $("[name='" + item.name + "'], [id='" + item.name + "']");
-        if (
-          input.attr("type") === "checkbox" ||
-          input.attr("type") === "radio"
-        ) {
-          input.filter('[value="' + item.value + '"]').prop("checked", true);
-        } else {
-          input.val(item.value);
-        }
-
-        if (input.hasClass("select-input") && input.val() == item.value) {
-          input.trigger("change");
-        }
-      });
-
-      if ($("#collection-type").val() === "Residential") {
-        $("#res-form-button").click();
-      } else if ($("#collection-type").val() === "Commercial") {
-        $("#com-form-button").click();
+      if (draft.collectionType === "Commercial") {
+        $("#com-form-button").trigger("click");
+      } else {
+        $("#res-form-button").trigger("click");
       }
 
-      setTimeout(function () {
-        var orderDetailsContent = formData.find(
-          (item) => item.name === "Selected-Items"
-        ).value;
-        $("#order-details").val("");
-        var orderLines = orderDetailsContent.split("\n");
+      for (const [id, value] of Object.entries(draft.fields)) {
+        if (id.startsWith("cf-")) continue;
+        const element = document.getElementById(id);
+        if (!element || !document.getElementById("bac-main-form").contains(element)) continue;
+        if (element.type === "checkbox" || element.type === "radio") {
+          if (element.checked !== Boolean(value)) element.click();
+          else $(element).trigger("change");
+        } else if (typeof value === "string" || typeof value === "number") {
+          if (element._flatpickr && /^\d{2}\/\d{2}\/\d{4}$/.test(String(value))) {
+            element._flatpickr.setDate(String(value), false, "d/m/Y");
+          } else {
+            $(element).val(value);
+          }
+        }
+      }
 
-        orderLines.forEach(function (line) {
-          var parts = line.split(", ");
-          var itemName = parts[0].trim();
-          var quantity = parseInt(parts[2]);
+      const previousPlaceId = draft.addressSelection?.placeId;
+      if (typeof previousPlaceId === "string" && previousPlaceId) {
+        selectedPlaceId = previousPlaceId;
+        selectedFromAutocomplete = true;
+        sessionStorage.setItem(PLACE_ID_STORAGE_KEY, previousPlaceId);
+      }
 
-          $(".form-product-option").each(function () {
-            var itemNameElement = $(this).find(".item-name").text().trim();
-            if (itemNameElement === itemName) {
-              var addButton = $(this).find(".counter-add:not(.disable)");
-              var existingQuantity = parseInt($(this).find(".quantity").text());
-              var totalQuantity = existingQuantity + quantity;
-              $(this).find(".quantity").text(totalQuantity);
-              updateCounterButtons($(this).find(".quantity"));
-            }
-          });
-        });
+      const quantities = new Map(
+        draft.items.filter(item => /^item(?:[1-9]|[12][0-9]|3[0-4])$/.test(item.id) &&
+          Number.isSafeInteger(item.quantity) && item.quantity > 0 && item.quantity <= 999)
+          .map(item => [item.id, item.quantity])
+      );
+      countersInitializing = true;
+      $(".quantity").each(function () {
+        const q = quantities.get($(this).attr("data-item-id")) || 0;
+        $(this).text(q);
+        updateCounterButtons($(this));
+      });
+      countersInitializing = false;
+      updateTotal();
+    })();
 
-        setTimeout(function () {
-          $(".form-product-dropdown-title").click();
-          setTimeout(function () {
-            $(".form-product-dropdown-title").click();
-            $("#order-details").val("");
-            setTimeout(function () {
-              $("#counter-add-test").click();
-              setTimeout(function () {
-                $("#counter-sub-test").click();
-              }, 500);
-            }, 100);
-          }, 100);
-        }, 500);
-      }, 100);
-    }
   }
   }
   // Embed elements can execute before jquery.js and webflow.js are loaded.
