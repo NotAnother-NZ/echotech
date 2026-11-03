@@ -1,0 +1,81 @@
+<!-- Echo Booking Page 3: paste entire block into a Webflow Embed on /booking-confirmation. -->
+<script>
+/* Echo — Page 3 confirmation (database-free staging version).
+ * A local native-Webflow success marker is required for every booking.
+ * Residential bookings additionally require live Stripe API verification.
+ */
+(() => {
+  'use strict';
+  const header=document.querySelector('#text-header-top h1');
+  const description=document.getElementById('redirect-text');
+  if(!header||!description)return;
+  const DRAFT='echo:new-booking:v2',PREPARED='echo:prepared-booking:v2',
+    CHECKOUT='echo:checkout-id:v2',ATTEMPTED='echo:receipt-attempted:v2',
+    DONE='echo:receipt-completed:v2';
+  const wrap=document.getElementById('page-wrapper');
+  const apiValue=wrap?.getAttribute('data-echo-booking-api') || 'https://echo-stripe-logic-git-fix-echo-booking-re-f076a2-not-another-nz.vercel.app/api/v2';
+  const api=(()=>{
+    try{
+      const u=new URL(apiValue);
+      return u.protocol==='https:' && u.pathname.replace(/\/$/,'')==='/api/v2' &&
+        !u.search&&!u.hash&&!u.username&&!u.password?u.origin+'/api/v2':null;
+    }catch{return null;}
+  })();
+  const ref=new URLSearchParams(location.search).get('booking');
+  let timer;
+  function display(hint,info){header.textContent=hint;description.textContent=info;}
+  function confirmed(){
+    for(const key of [DRAFT,PREPARED,CHECKOUT,ATTEMPTED,DONE])sessionStorage.removeItem(key);
+    display('Thanks! We’ve received your collection booking.','');
+    let count=10;
+    const tick=()=>{
+      if(count===0){
+        clearInterval(timer);
+        location.assign('/');
+      }else description.textContent='You will get redirected to the homepage in '+count--;
+    };
+    tick();
+    timer=setInterval(tick,1000);
+  }
+  async function verify(){
+    display('Checking your booking confirmation','Please keep this page open.');
+    let saved;
+    try{saved=JSON.parse(sessionStorage.getItem(PREPARED)||'null');}
+    catch{saved=null;}
+    if(!ref || !saved?.prepared || saved.prepared.reference!==ref ||
+       sessionStorage.getItem(DONE)!==ref){
+      display('We could not verify this booking',
+        'If you have paid, please do not make another payment. Contact Echo with your payment details.');
+      return;
+    }
+    if(saved.prepared.collectionType==='Commercial'){
+      confirmed();return;
+    }
+    if(!api || !saved.prepared.clientSecret || !/^pi_[A-Za-z0-9]+$/.test(ref)){
+      display('Payment verification is unavailable','Please contact Echo if you have already paid.');
+      return;
+    }
+    try{
+      const r=await fetch(api+'/bookings/status',{
+        method:'POST',mode:'cors',cache:'no-store',credentials:'omit',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          reference:ref,clientSecret:saved.prepared.clientSecret
+        })
+      });
+      const outcome=await r.json().catch(()=>({}));
+      if(r.ok && outcome.status==='paid')confirmed();
+      else display('Your booking is still being verified',
+        'If you have paid, please do not pay again. Contact Echo if the confirmation does not arrive.');
+    }catch{
+      display('Booking verification is temporarily unavailable',
+        'Your payment will not be charged again here. Please contact Echo if confirmation is delayed.');
+    }
+  }
+  window.addEventListener('pagehide',()=>{
+    if(timer)clearInterval(timer);
+  },{once:true});
+  verify();
+})();
+
+</script>
