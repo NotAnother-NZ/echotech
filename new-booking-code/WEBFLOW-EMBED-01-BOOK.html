@@ -676,7 +676,7 @@ $(document).ready(function () {
       return !isNaN(value) && value.indexOf(".") === -1;
     }
     function isValidName(value) {
-      return /^[a-zA-Z ]+$/.test(value);
+      return typeof value === 'string' && /^[\p{L}\p{M}\s.'’-]+$/u.test(value.trim());
     }
     function isValidEmail(value) {
       return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -685,7 +685,7 @@ $(document).ready(function () {
       return /^[+()-\s\d]+$/.test(value);
     }
     function isChecked(value) {
-      return $("#" + value).hasClass("clicked");
+      return $("#" + value).is(":checked");
     }
     function isSelected(value) {
       return $("#" + value).val() !== "";
