@@ -4,9 +4,13 @@
  */
 (() => {
   'use strict';
+  let initialized=false;
+  function initializeConfirmation() {
+  if(initialized)return;
   const header=document.querySelector('#text-header-top h1');
   const description=document.getElementById('redirect-text');
   if(!header||!description)return;
+  initialized=true;
   const DRAFT='echo:new-booking:v2',PREPARED='echo:prepared-booking:v2',
     CHECKOUT='echo:checkout-id:v2',ATTEMPTED='echo:receipt-attempted:v2',
     DONE='echo:receipt-completed:v2';
@@ -74,4 +78,9 @@
     if(timer)clearInterval(timer);
   },{once:true});
   verify();
+}  }
+  window.Webflow=window.Webflow||[];
+  window.Webflow.push(initializeConfirmation);
+  if(document.readyState==='complete')initializeConfirmation();
+  else window.addEventListener('load',initializeConfirmation,{once:true});
 })();
