@@ -322,6 +322,7 @@ $(document).ready(function () {
     let quoteReady = false;
     async function updateTotal() {
       const requestId = ++activeItemQuote;
+      ++activeShippingQuote;
       quoteReady = false;
       totalCost = 0;
       totalWeight = 0;
@@ -596,6 +597,7 @@ $(document).ready(function () {
     let activeDistanceRequest = 0;
 
     function clearDistanceAndQuote() {
+      ++activeShippingQuote;
       $("#distance").val("");
       $("#shipping-cost").val("");
       $("#grand-total").val("");
