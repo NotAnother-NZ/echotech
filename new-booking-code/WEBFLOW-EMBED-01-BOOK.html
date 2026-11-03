@@ -1,6 +1,14 @@
-<!-- Echo Booking Page 1: paste entire block into a Webflow Embed on /book-a-collection-new. Keep sitewide date-picker.js. -->
+<!-- Echo Booking /book-a-collection: original form and Webflow styling preserved. -->
 <script>
-$(document).ready(function () {
+/* Echo Booking Page 1: wait for Webflow's jQuery/runtime after inline Embed. */
+(() => {
+  "use strict";
+  let echoBookingInitialized = false;
+  function initializeEchoBooking() {
+    if (echoBookingInitialized || !window.jQuery ||
+        !document.getElementById("bac-form-wrapper-new")) return;
+    echoBookingInitialized = true;
+    const $ = window.jQuery;
   let copyTimes = 0;
   if ($("#bac-form-wrapper-new").length) {
     /*
@@ -36,7 +44,7 @@ $(document).ready(function () {
     $("#data-erasure-service").hide();
     $("#data-erasure-needed").val("No");
     $("#data-erasure-needed").hide();
-    $("#data-erasure-service-checkbox").removeClass("clicked");
+    $("#data-erasure-service-checkbox").prop("checked", false).trigger("change");
     $("#contact-details-title").text("Contact Details");
     $("#contact-details").show();
     $("#commercial-collection-type-note-text").hide();
@@ -52,7 +60,7 @@ $(document).ready(function () {
     $("#billing-details").hide();
     $("#business-contact-details").hide();
     $("#contact-billing-same").hide();
-    $("#contact-billing-same-checkbox").removeClass("clicked");
+    $("#contact-billing-same-checkbox").prop("checked", false).trigger("change");
     $("#bac-contact-first-name").prop("required", false);
     $("#bac-contact-surname").prop("required", false);
     $("#bac-contact-email-address").prop("required", false);
@@ -78,7 +86,7 @@ $(document).ready(function () {
       $("#on-site-phone").prop("required", false);
       $("#data-erasure-service").hide();
       $("#data-erasure-needed").val("No");
-      $("#data-erasure-service-checkbox").removeClass("clicked");
+      $("#data-erasure-service-checkbox").prop("checked", false).trigger("change");
       $("#contact-details-title").text("Contact Details");
       $("#contact-details").show();
       $("#bac-first-name").prop("required", true);
@@ -94,7 +102,7 @@ $(document).ready(function () {
       $("#commercial-item-collection-note-text").hide();
       $(".body2.forest-green.opacity-70.pricing").show();
       $("#shipping-note-wrapper").show();
-      $("#contact-billing-same-checkbox").removeClass("clicked");
+      $("#contact-billing-same-checkbox").prop("checked", false).trigger("change");
       $("#bac-contact-first-name").prop("required", false);
       $("#bac-contact-surname").prop("required", false);
       $("#bac-contact-email-address").prop("required", false);
@@ -118,7 +126,7 @@ $(document).ready(function () {
       $("#on-site-phone").prop("required", true);
       $("#data-erasure-service").show();
       $("#data-erasure-needed").val("No");
-      $("#data-erasure-service-checkbox").removeClass("clicked");
+      $("#data-erasure-service-checkbox").prop("checked", false).trigger("change");
       $("#contact-details-title").text("Business & Contact Details");
       $("#contact-details").hide();
       $("#commercial-collection-type-note-text").show();
@@ -134,8 +142,7 @@ $(document).ready(function () {
       $("#billing-details").show();
       $("#business-contact-details").hide();
       $("#contact-billing-same").show();
-      $("#contact-billing-same-checkbox").removeClass("clicked");
-      $("#contact-billing-same-checkbox").click();
+      $("#contact-billing-same-checkbox").prop("checked", true).trigger("change");
       $("#bac-company-name").prop("required", true);
       $("#bac-company-size").prop("required", true);
       $("#bac-business-sector").prop("required", true);
@@ -153,36 +160,25 @@ $(document).ready(function () {
       $("#collection-instruction").show();
       $("#collection-instruction-toggle").hide();
     });
-    $("#contact-billing-same-checkbox").click(function () {
-      $(this).toggleClass("clicked");
-      if ($(this).hasClass("clicked")) {
-        $("#business-contact-details").hide();
-        $("#bac-contact-first-name").prop("required", false);
-        $("#bac-contact-surname").prop("required", false);
-        $("#bac-contact-email-address").prop("required", false);
-        $("#bac-contact-phone").prop("required", false);
-      } else {
-        $("#business-contact-details").show();
-        $("#bac-contact-first-name").prop("required", true);
-        $("#bac-contact-surname").prop("required", true);
-        $("#bac-contact-email-address").prop("required", true);
-        $("#bac-contact-phone").prop("required", true);
-      }
+    function updateCheckboxAppearance(input) {
+      const el = $(input), checked = Boolean(input.checked);
+      el.toggleClass("clicked", checked);
+      el.closest(".w-checkbox").find(".w-checkbox-input")
+        .toggleClass("w--redirected-checked", checked);
+    }
+    $("#contact-billing-same-checkbox").on("change", function () {
+      updateCheckboxAppearance(this);
+      const separate = !this.checked;
+      $("#business-contact-details").toggle(separate);
+      $("#bac-contact-first-name, #bac-contact-surname, #bac-contact-email-address, #bac-contact-phone")
+        .prop("required", separate);
     });
-    $("#data-erasure-service-checkbox").click(function () {
-      $(this).toggleClass("clicked");
-      if ($(this).hasClass("clicked")) {
-        $("#data-erasure-needed").val("Yes");
-        $("#bac-submit").show();
-        $("#bac-pay").hide();
-      } else {
-        $("#data-erasure-needed").val("No");
-        $("#bac-submit").hide();
-        $("#bac-pay").show();
-      }
+    $("#data-erasure-service-checkbox").on("change", function () {
+      updateCheckboxAppearance(this);
+      $("#data-erasure-needed").val(this.checked ? "Yes" : "No");
     });
-    $("#bac-terms-and-conditions-checkbox").click(function () {
-      $(this).toggleClass("clicked");
+    $("#bac-terms-and-conditions-checkbox").on("change", function () {
+      updateCheckboxAppearance(this);
     });
     /*
      *
@@ -193,8 +189,14 @@ $(document).ready(function () {
      */
     $(".quantity").each(function (index) {
       const declaredId = $(this).attr("data-item-id");
-      if (!/^item(?:[1-9]|[12][0-9]|3[0-4])$/.test(declaredId || "")) {
-        $(this).attr("data-item-id", "item" + (index + 1));
+      const displayedItemId = $(this).closest(".form-product-option")
+        .find(".item-name[id]").first().attr("id");
+      const candidate = /^item(?:[1-9]|[12][0-9]|3[0-4])$/.test(declaredId || "")
+        ? declaredId : displayedItemId;
+      if (/^item(?:[1-9]|[12][0-9]|3[0-4])$/.test(candidate || "")) {
+        $(this).attr("data-item-id", candidate);
+      } else {
+        console.error("[Echo Booking] Missing product ID at counter index",index);
       }
     });
     var totalCost = 0;
@@ -202,7 +204,9 @@ $(document).ready(function () {
     var orderDetails = [];
     var uniqueItemIds = [];
     let activeItemQuote = 0;
+    let activeShippingQuote = 0;
     let quoteReady = false;
+    let countersInitializing = true;
     async function updateTotal() {
       const requestId = ++activeItemQuote;
       ++activeShippingQuote;
@@ -306,7 +310,7 @@ $(document).ready(function () {
       } else {
         counterAdd.removeClass("disable");
       }
-      updateTotal();
+      if (!countersInitializing) updateTotal();
     }
     $(".counter-sub").click(function () {
       var quantityElement = $(this).siblings(".quantity");
@@ -339,6 +343,8 @@ $(document).ready(function () {
         updateCounterButtons($(this).parent().parent().find(".quantity"));
       }
     });
+    $(".bulk-counter-10, .bulk-counter-25, .bulk-counter-50")
+      .on("click.echoBookingLink",function (event) { event.preventDefault(); });
     $(".bulk-counter-25").click(function () {
       var quantity = parseInt(
         $(this).parent().parent().find(".quantity").text()
@@ -368,6 +374,8 @@ $(document).ready(function () {
     $(".quantity").each(function () {
       updateCounterButtons($(this));
     });
+    countersInitializing = false;
+    updateTotal();
     /*
      *
      *
@@ -375,20 +383,37 @@ $(document).ready(function () {
      *
      *
      */
-    var addressInput = document.getElementById("address");
-    var autocomplete = new google.maps.places.Autocomplete(addressInput, {
-      componentRestrictions: {
-        country: "nz",
-      }, // Restrict autocomplete to New Zealand
-    });
-    var selectedFromAutocomplete = false;
-    autocomplete.addListener("place_changed", function () {
-      selectedFromAutocomplete = true;
-      processPlaceSelection(autocomplete.getPlace());
-    });
+    const addressInput = document.getElementById("address");
+    let selectedFromAutocomplete = false;
+    let autocompleteInitialized = false;
+    function initializeAddressAutocomplete() {
+      if (autocompleteInitialized) return true;
+      if (!window.google?.maps?.places?.Autocomplete || !addressInput) return false;
+      const autocomplete = new google.maps.places.Autocomplete(addressInput, {
+        componentRestrictions: { country: "nz" },
+        fields: ["address_components", "geometry", "place_id", "formatted_address"]
+      });
+      autocomplete.addListener("place_changed", function () {
+        selectedFromAutocomplete = true;
+        processPlaceSelection(autocomplete.getPlace());
+      });
+      autocompleteInitialized = true;
+      return true;
+    }
+    if (!initializeAddressAutocomplete()) {
+      const mapStarted = Date.now();
+      const mapRetry = window.setInterval(function () {
+        if (initializeAddressAutocomplete()) window.clearInterval(mapRetry);
+        else if (Date.now() - mapStarted > 10000) {
+          window.clearInterval(mapRetry);
+          console.error("[Echo Booking] Google Places Autocomplete is unavailable.");
+        }
+      }, 250);
+    }
     const PLACE_ID_STORAGE_KEY = "echo:booking-place-id:v2";
     let selectedPlaceId = sessionStorage.getItem(PLACE_ID_STORAGE_KEY) || "";
     $("#address").on("input", function () {
+      selectedFromAutocomplete = false;
       selectedPlaceId = "";
       sessionStorage.removeItem(PLACE_ID_STORAGE_KEY);
       ++activeDistanceRequest;
@@ -410,7 +435,7 @@ $(document).ready(function () {
         return;
       }
       var postcode = extractPostcodeFromAddressComponents(
-        place.address_components
+        place.address_components || []
       );
       if (postcode) {
         $("#post-code").val(postcode);
@@ -431,9 +456,9 @@ $(document).ready(function () {
      * Google Distance Matrix values are in metres, not rounded kilometres.
      */
     const collectionCatchments = [
-      { name: "Auckland", location: new google.maps.LatLng(-36.9249524, 174.8192662) },
-      { name: "Wellington", location: new google.maps.LatLng(-41.2370845, 174.9130315) },
-      { name: "Christchurch", location: new google.maps.LatLng(-43.5320544, 172.6362254) }
+      { name: "Auckland", location: { lat:-36.9249524, lng:174.8192662 } },
+      { name: "Wellington", location: { lat:-41.2370845, lng:174.9130315 } },
+      { name: "Christchurch", location: { lat:-43.5320544, lng:172.6362254 } }
     ];
     let activeDistanceRequest = 0;
     function clearDistanceAndQuote() {
@@ -463,6 +488,10 @@ $(document).ready(function () {
     function calculateAndDisplayDistance(origin) {
       const requestId = ++activeDistanceRequest;
       clearDistanceAndQuote();
+      if (!window.google?.maps?.DistanceMatrixService) {
+        console.error("[Echo Booking] Google driving-distance service unavailable.");
+        return;
+      }
       const service = new google.maps.DistanceMatrixService();
       service.getDistanceMatrix(
         {
@@ -491,7 +520,6 @@ $(document).ready(function () {
         }
       );
     }
-    let activeShippingQuote = 0;
     function shippingCostAndGrandTotal() {
       const requestId = ++activeShippingQuote;
       const km = Number.parseFloat($("#distance").val());
@@ -531,18 +559,11 @@ $(document).ready(function () {
       return null;
     }
     function isLocationInNewZealand(place) {
-      for (var i = 0; i < place.address_components.length; i++) {
-        var addressComponent = place.address_components[i];
-        for (var j = 0; j < addressComponent.types.length; j++) {
-          if (
-            addressComponent.types[j] === "country" &&
-            addressComponent.short_name !== "NZ"
-          ) {
-            return false;
-          }
-        }
-      }
-      return true;
+      const components = Array.isArray(place.address_components) ? place.address_components : [];
+      return components.some(function (part) {
+        return Array.isArray(part.types) &&
+          part.types.includes("country") && part.short_name === "NZ";
+      });
     }
     /*
      *
@@ -558,7 +579,9 @@ $(document).ready(function () {
           Math.round($(this).find(".form-product-dropdown-title").outerHeight())
         );
       });
-      $(".form-product-dropdown-title").click(function () {
+      $(".form-product-dropdown-title")
+        .off("click.echoBookingDropdown")
+        .on("click.echoBookingDropdown", function () {
         var dropdown = $(this).closest(".form-product-dropdown");
         var dropdownOptions = dropdown.find(".form-product-dropdown-options");
         if (
@@ -859,6 +882,14 @@ $(document).ready(function () {
         validations: ["bac-terms-and-conditions-checkbox"],
       },
     ];
+    function applicableFields(type) {
+      if (type === "Residential") return fieldsResidential;
+      return $("#contact-billing-same-checkbox").is(":checked")
+        ? fieldsCommercial.filter(function (field) {
+            return !field.id.startsWith("bac-contact-");
+          })
+        : fieldsCommercial;
+    }
     function generateValidationMessage(type, incompleteFields) {
       let baseMessage = `Note: To help us process your ${type.toLowerCase()} request efficiently, please make sure to complete `;
       const fieldDescriptions = {
@@ -958,8 +989,7 @@ $(document).ready(function () {
         $("#collection-type").val() === "Residential"
           ? "Residential"
           : "Commercial";
-      const fields =
-        type === "Residential" ? fieldsResidential : fieldsCommercial;
+      const fields = applicableFields(type);
       validateFields(fields, type); // Now solely responsible for updating the UI based on validation
     }, 250);
     /*
@@ -975,6 +1005,12 @@ $(document).ready(function () {
         event.preventDefault();
         event.stopImmediatePropagation();
         $("#bac-title").text("Processing...");
+        const currentType = $("#collection-type").val() === "Commercial"
+          ? "Commercial" : "Residential";
+        const requiredFields = applicableFields(currentType);
+        if (validateFields(requiredFields, currentType) !== requiredFields.length) {
+          return false;
+        }
         var formData = $(this).serializeArray(); // Example serialization
         if (!quoteReady || !Number.isSafeInteger(Number($("#grand-total").val())) ||
             Number($("#grand-total").val()) < 50) {
@@ -1027,64 +1063,61 @@ $(document).ready(function () {
      *
      *
      */
-    var storedFormData = sessionStorage.getItem("formData");
-    if (storedFormData) {
-      var formData = JSON.parse(storedFormData);
-      formData.forEach(function (item) {
-        var input = $("[name='" + item.name + "'], [id='" + item.name + "']");
-        if (
-          input.attr("type") === "checkbox" ||
-          input.attr("type") === "radio"
-        ) {
-          input.filter('[value="' + item.value + '"]').prop("checked", true);
-        } else {
-          input.val(item.value);
-        }
-        if (input.hasClass("select-input") && input.val() == item.value) {
-          input.trigger("change");
-        }
-      });
-      if ($("#collection-type").val() === "Residential") {
-        $("#res-form-button").click();
-      } else if ($("#collection-type").val() === "Commercial") {
-        $("#com-form-button").click();
+    (function restoreBookingDraft() {
+      let draft;
+      try {
+        draft = JSON.parse(sessionStorage.getItem("echo:new-booking:v2") || "null");
+      } catch {
+        sessionStorage.removeItem("echo:new-booking:v2");
+        return;
       }
-      setTimeout(function () {
-        var orderDetailsContent = formData.find(
-          (item) => item.name === "Selected-Items"
-        ).value;
-        $("#order-details").val("");
-        var orderLines = orderDetailsContent.split("\n");
-        orderLines.forEach(function (line) {
-          var parts = line.split(", ");
-          var itemName = parts[0].trim();
-          var quantity = parseInt(parts[2]);
-          $(".form-product-option").each(function () {
-            var itemNameElement = $(this).find(".item-name").text().trim();
-            if (itemNameElement === itemName) {
-              var addButton = $(this).find(".counter-add:not(.disable)");
-              var existingQuantity = parseInt($(this).find(".quantity").text());
-              var totalQuantity = existingQuantity + quantity;
-              $(this).find(".quantity").text(totalQuantity);
-              updateCounterButtons($(this).find(".quantity"));
-            }
-          });
-        });
-        setTimeout(function () {
-          $(".form-product-dropdown-title").click();
-          setTimeout(function () {
-            $(".form-product-dropdown-title").click();
-            $("#order-details").val("");
-            setTimeout(function () {
-              $("#counter-add-test").click();
-              setTimeout(function () {
-                $("#counter-sub-test").click();
-              }, 500);
-            }, 100);
-          }, 100);
-        }, 500);
-      }, 100);
-    }
+      if (!draft || draft.version !== 2 || !draft.fields ||
+          !Array.isArray(draft.items)) return;
+      if (draft.collectionType === "Commercial") {
+        $("#com-form-button").trigger("click");
+      } else {
+        $("#res-form-button").trigger("click");
+      }
+      for (const [id, value] of Object.entries(draft.fields)) {
+        if (id.startsWith("cf-")) continue;
+        const element = document.getElementById(id);
+        if (!element || !document.getElementById("bac-main-form").contains(element)) continue;
+        if (element.type === "checkbox" || element.type === "radio") {
+          if (element.checked !== Boolean(value)) element.click();
+          else $(element).trigger("change");
+        } else if (typeof value === "string" || typeof value === "number") {
+          if (element._flatpickr && /^\d{2}\/\d{2}\/\d{4}$/.test(String(value))) {
+            element._flatpickr.setDate(String(value), false, "d/m/Y");
+          } else {
+            $(element).val(value);
+          }
+        }
+      }
+      const previousPlaceId = draft.addressSelection?.placeId;
+      if (typeof previousPlaceId === "string" && previousPlaceId) {
+        selectedPlaceId = previousPlaceId;
+        selectedFromAutocomplete = true;
+        sessionStorage.setItem(PLACE_ID_STORAGE_KEY, previousPlaceId);
+      }
+      const quantities = new Map(
+        draft.items.filter(item => /^item(?:[1-9]|[12][0-9]|3[0-4])$/.test(item.id) &&
+          Number.isSafeInteger(item.quantity) && item.quantity > 0 && item.quantity <= 999)
+          .map(item => [item.id, item.quantity])
+      );
+      countersInitializing = true;
+      $(".quantity").each(function () {
+        const q = quantities.get($(this).attr("data-item-id")) || 0;
+        $(this).text(q);
+        updateCounterButtons($(this));
+      });
+      countersInitializing = false;
+      updateTotal();
+    })();
   }
-});
+  }
+  window.Webflow = window.Webflow || [];
+  window.Webflow.push(initializeEchoBooking);
+  if (document.readyState === "complete") initializeEchoBooking();
+  else window.addEventListener("load", initializeEchoBooking, {once:true});
+})();
 </script>
