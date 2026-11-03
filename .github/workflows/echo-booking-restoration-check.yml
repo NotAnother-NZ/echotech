@@ -22,4 +22,4 @@ jobs:
       - run: node --check new-booking-code/review-restore.js
       - run: node --check new-booking-code/native-receipt-restore.js
       - run: node --check new-booking-code/confirmation-restore.js
-      - run: node --test new-booking-code/booking-regions.test.cjs
+      - run: node --test new-booking-code/*.test.cjs
