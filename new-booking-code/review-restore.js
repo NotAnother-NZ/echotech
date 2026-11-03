@@ -5,10 +5,14 @@
  */
 (() => {
   'use strict';
-  const form=document.getElementById('bac-main-review-form');
+  let initialized=false;
+  function initializeReview() {
+    if(initialized) return;
+    const form=document.getElementById('bac-main-review-form');
   const wrap=document.getElementById('bac-form-wrapper-review');
   if (!form || !wrap || form.dataset.echoMinimalReview==='true') return;
   form.dataset.echoMinimalReview='true';
+  initialized=true;
 
   const DRAFT='echo:new-booking:v2', PREPARED='echo:prepared-booking:v2',
     CHECKOUT='echo:checkout-id:v2', ATTEMPTED='echo:receipt-attempted:v2',
@@ -375,11 +379,11 @@
     status('');
     load();
   }
-  if (window.Webflow && typeof window.Webflow.push === 'function') {
-    window.Webflow.push(start);
-  } else if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded',start,{once:true});
-  } else {
-    start();
+  start();
   }
+  // An inline Embed can appear before the target form and before Webflow.js.
+  window.Webflow=window.Webflow||[];
+  window.Webflow.push(initializeReview);
+  if(document.readyState==='complete')initializeReview();
+  else window.addEventListener('load',initializeReview,{once:true});
 })();
