@@ -1,0 +1,1123 @@
+<!-- Echo Booking /book-a-collection: original form and Webflow styling preserved. -->
+<script>
+/* Echo Booking Page 1: wait for Webflow's jQuery/runtime after inline Embed. */
+(() => {
+  "use strict";
+  let echoBookingInitialized = false;
+  function initializeEchoBooking() {
+    if (echoBookingInitialized || !window.jQuery ||
+        !document.getElementById("bac-form-wrapper-new")) return;
+    echoBookingInitialized = true;
+    const $ = window.jQuery;
+  let copyTimes = 0;
+  if ($("#bac-form-wrapper-new").length) {
+    /*
+     *
+     *
+     * COLLECTION TYPE SELECTOR AND FORM ELEMENTS TOGGLE
+     *
+     *
+     */
+    $(".form-radio-button").click(function () {
+      $(this).addClass("selected");
+      $(this).find(".body2").removeClass("forest-green");
+      $(this).find(".body2").addClass("white");
+      $(this).find(".radio-tick-icon").removeClass("not-selected");
+      $(this).siblings().removeClass("selected");
+      $(this).siblings().find(".body2").removeClass("white");
+      $(this).siblings().find(".body2").addClass("forest-green");
+      $(this).siblings().find(".radio-tick-icon").addClass("not-selected");
+    });
+    $("#res-form-button").click();
+    $("#collection-type").val("Residential");
+    $("#collection-type").hide();
+    $("#on-site-contact").hide();
+    $("#on-site-full-name").prop("required", false);
+    $("#on-site-phone").prop("required", false);
+    $("#order-details").hide();
+    $("#total-unique-items").hide();
+    $("#total-price").hide();
+    $("#total-weight").hide();
+    $("#distance").hide();
+    $("#shipping-cost").hide();
+    $("#grand-total").hide();
+    $("#data-erasure-service").hide();
+    $("#data-erasure-needed").val("No");
+    $("#data-erasure-needed").hide();
+    $("#data-erasure-service-checkbox").prop("checked", false).trigger("change");
+    $("#contact-details-title").text("Contact Details");
+    $("#contact-details").show();
+    $("#commercial-collection-type-note-text").hide();
+    $("#residential-item-collection-note-text").show();
+    $("#commercial-item-collection-note-text").hide();
+    $(".body2.forest-green.opacity-70.pricing").show();
+    $("#shipping-note-wrapper").show();
+    $("#bac-first-name").prop("required", true);
+    $("#bac-surname").prop("required", true);
+    $("#bac-email-address").prop("required", true);
+    $("#bac-phone").prop("required", true);
+    $("#business-details").hide();
+    $("#billing-details").hide();
+    $("#business-contact-details").hide();
+    $("#contact-billing-same").hide();
+    $("#contact-billing-same-checkbox").prop("checked", false).trigger("change");
+    $("#bac-contact-first-name").prop("required", false);
+    $("#bac-contact-surname").prop("required", false);
+    $("#bac-contact-email-address").prop("required", false);
+    $("#bac-contact-phone").prop("required", false);
+    $("#bac-company-name").prop("required", false);
+    $("#bac-company-size").prop("required", false);
+    $("#bac-business-sector").prop("required", false);
+    $("#bac-billing-first-name").prop("required", false);
+    $("#bac-billing-surname").prop("required", false);
+    $("#bac-billing-email-address").prop("required", false);
+    $("#bac-billing-phone").prop("required", false);
+    $("#bac-submit").hide();
+    $("#bac-pay").show();
+    $(".form-product-bulk-option-details").hide();
+    $(".form-product-option").removeClass("commercial");
+    $(".select-input").each(function () {
+      $(this).children().first().attr("disabled", "disabled");
+    });
+    $("#res-form-button").click(function () {
+      $("#collection-type").val("Residential");
+      $("#on-site-contact").hide();
+      $("#on-site-full-name").prop("required", false);
+      $("#on-site-phone").prop("required", false);
+      $("#data-erasure-service").hide();
+      $("#data-erasure-needed").val("No");
+      $("#data-erasure-service-checkbox").prop("checked", false).trigger("change");
+      $("#contact-details-title").text("Contact Details");
+      $("#contact-details").show();
+      $("#bac-first-name").prop("required", true);
+      $("#bac-surname").prop("required", true);
+      $("#bac-email-address").prop("required", true);
+      $("#bac-phone").prop("required", true);
+      $("#business-details").hide();
+      $("#billing-details").hide();
+      $("#business-contact-details").hide();
+      $("#contact-billing-same").hide();
+      $("#commercial-collection-type-note-text").hide();
+      $("#residential-item-collection-note-text").show();
+      $("#commercial-item-collection-note-text").hide();
+      $(".body2.forest-green.opacity-70.pricing").show();
+      $("#shipping-note-wrapper").show();
+      $("#contact-billing-same-checkbox").prop("checked", false).trigger("change");
+      $("#bac-contact-first-name").prop("required", false);
+      $("#bac-contact-surname").prop("required", false);
+      $("#bac-contact-email-address").prop("required", false);
+      $("#bac-contact-phone").prop("required", false);
+      $("#bac-company-name").prop("required", false);
+      $("#bac-company-size").prop("required", false);
+      $("#bac-business-sector").prop("required", false);
+      $("#bac-billing-first-name").prop("required", false);
+      $("#bac-billing-surname").prop("required", false);
+      $("#bac-billing-email-address").prop("required", false);
+      $("#bac-billing-phone").prop("required", false);
+      $("#bac-submit").hide();
+      $("#bac-pay").show();
+      $(".form-product-bulk-option-details").hide();
+      $(".form-product-option").removeClass("commercial");
+    });
+    $("#com-form-button").click(function () {
+      $("#collection-type").val("Commercial");
+      $("#on-site-contact").show();
+      $("#on-site-full-name").prop("required", true);
+      $("#on-site-phone").prop("required", true);
+      $("#data-erasure-service").show();
+      $("#data-erasure-needed").val("No");
+      $("#data-erasure-service-checkbox").prop("checked", false).trigger("change");
+      $("#contact-details-title").text("Business & Contact Details");
+      $("#contact-details").hide();
+      $("#commercial-collection-type-note-text").show();
+      $("#commercial-item-collection-note-text").show();
+      $("#residential-item-collection-note-text").hide();
+      $(".body2.forest-green.opacity-70.pricing").hide();
+      $("#shipping-note-wrapper").hide();
+      $("#bac-first-name").prop("required", false);
+      $("#bac-surname").prop("required", false);
+      $("#bac-email-address").prop("required", false);
+      $("#bac-phone").prop("required", false);
+      $("#business-details").show();
+      $("#billing-details").show();
+      $("#business-contact-details").hide();
+      $("#contact-billing-same").show();
+      $("#contact-billing-same-checkbox").prop("checked", true).trigger("change");
+      $("#bac-company-name").prop("required", true);
+      $("#bac-company-size").prop("required", true);
+      $("#bac-business-sector").prop("required", true);
+      $("#bac-billing-first-name").prop("required", true);
+      $("#bac-billing-surname").prop("required", true);
+      $("#bac-billing-email-address").prop("required", true);
+      $("#bac-billing-phone").prop("required", true);
+      $("#bac-submit").hide();
+      $("#bac-pay").show();
+      $(".form-product-bulk-option-details").show();
+      $(".form-product-option").addClass("commercial");
+    });
+    $("#collection-instruction").hide();
+    $("#collection-instruction-toggle").click(function () {
+      $("#collection-instruction").show();
+      $("#collection-instruction-toggle").hide();
+    });
+    function updateCheckboxAppearance(input) {
+      const el = $(input), checked = Boolean(input.checked);
+      el.toggleClass("clicked", checked);
+      el.closest(".w-checkbox").find(".w-checkbox-input")
+        .toggleClass("w--redirected-checked", checked);
+    }
+    $("#contact-billing-same-checkbox").on("change", function () {
+      updateCheckboxAppearance(this);
+      const separate = !this.checked;
+      $("#business-contact-details").toggle(separate);
+      $("#bac-contact-first-name, #bac-contact-surname, #bac-contact-email-address, #bac-contact-phone")
+        .prop("required", separate);
+    });
+    $("#data-erasure-service-checkbox").on("change", function () {
+      updateCheckboxAppearance(this);
+      $("#data-erasure-needed").val(this.checked ? "Yes" : "No");
+    });
+    $("#bac-terms-and-conditions-checkbox").on("change", function () {
+      updateCheckboxAppearance(this);
+    });
+    /*
+     *
+     *
+     * QUANTITY SELECTOR AND COST CALCULATION
+     *
+     *
+     */
+    $(".quantity").each(function (index) {
+      const declaredId = $(this).attr("data-item-id");
+      const displayedItemId = $(this).closest(".form-product-option")
+        .find(".item-name[id]").first().attr("id");
+      const candidate = /^item(?:[1-9]|[12][0-9]|3[0-4])$/.test(declaredId || "")
+        ? declaredId : displayedItemId;
+      if (/^item(?:[1-9]|[12][0-9]|3[0-4])$/.test(candidate || "")) {
+        $(this).attr("data-item-id", candidate);
+      } else {
+        console.error("[Echo Booking] Missing product ID at counter index",index);
+      }
+    });
+    var totalCost = 0;
+    var totalWeight = 0;
+    var orderDetails = [];
+    var uniqueItemIds = [];
+    let activeItemQuote = 0;
+    let activeShippingQuote = 0;
+    let quoteReady = false;
+    let countersInitializing = true;
+    async function updateTotal() {
+      const requestId = ++activeItemQuote;
+      ++activeShippingQuote;
+      quoteReady = false;
+      totalCost = 0;
+      totalWeight = 0;
+      orderDetails = [];
+      uniqueItemIds = [];
+      $("#total-price, #shipping-cost, #grand-total").val("");
+      const selected = [];
+      $(".form-product-option-counter.selected").each(function () {
+        const counter = $(this);
+        const quantityEl = counter.find(".quantity");
+        const id = quantityEl.attr("data-item-id");
+        const quantity = Number(quantityEl.text());
+        if (/^item(?:[1-9]|[12][0-9]|3[0-4])$/.test(id || "") &&
+            Number.isSafeInteger(quantity) && quantity > 0 && quantity <= 999) {
+          selected.push({id, quantity, counter});
+        }
+      });
+      if (!selected.length) {
+        $("#order-details").val("");
+        $("#total-cost").text("0.00");
+        $("#total-weight").val("");
+        $("#total-unique-items").val("0");
+        copyTimes = 0;
+        return;
+      }
+      selected.forEach(line => line.counter.find(".counter-add, .counter-sub").addClass("disable"));
+      try {
+        const data = await Promise.all(selected.map(async function (line) {
+          const url = "https://echo-pricing-logic.vercel.app/item?id=" +
+            encodeURIComponent(line.id) + "&quantity=" + line.quantity;
+          const response = await $.get(url);
+          const parts = String(response).split(", ");
+          const amount = Number(parts[0]);
+          const weight = Number(parts[1]);
+          const name = parts.slice(2).join(", ").trim();
+          if (!Number.isFinite(amount) || amount < 0 ||
+              !Number.isFinite(weight) || weight < 0 || !name) {
+            throw new Error("The collection item pricing response is invalid.");
+          }
+          return {id:line.id,quantity:line.quantity,amount,weight,name};
+        }));
+        if (requestId !== activeItemQuote) return;
+        totalCost = data.reduce((sum,item) => sum + item.amount,0);
+        totalWeight = data.reduce((sum,item) => sum + item.weight,0);
+        orderDetails = data.map(item => ({
+          itemName:item.name,
+          unitPrice:"$" + (item.amount / item.quantity).toFixed(2),
+          quantity:item.quantity + "x",
+          price:"$" + item.amount.toFixed(2)
+        }));
+        uniqueItemIds = data.map(item => item.id);
+        $("#total-cost").text(totalCost.toFixed(2));
+        $("#total-weight").val(totalWeight + "kg");
+        $("#order-details").val(orderDetails.map(item => [
+          item.itemName,item.unitPrice,item.quantity,item.price
+        ].join(", ")).join("\n"));
+        $("#total-price").val(Math.round(totalCost * 100));
+        $("#total-unique-items").val(uniqueItemIds.length);
+        copyTimes = uniqueItemIds.length;
+        quoteReady = true;
+        shippingCostAndGrandTotal();
+      } catch (error) {
+        if (requestId !== activeItemQuote) return;
+        quoteReady = false;
+        $("#total-price, #shipping-cost, #grand-total").val("");
+        console.error("Unable to calculate item quote:",error.message);
+        alert("We couldn't calculate the selected items. Please try again.");
+      } finally {
+        if (requestId === activeItemQuote) {
+          selected.forEach(line => line.counter.find(".counter-add, .counter-sub").removeClass("disable"));
+        }
+      }
+    }
+    let maxQuantity = 999;
+    let minQuantity = 0;
+    function updateCounterButtons(quantityElement) {
+      var quantity = parseInt(quantityElement.text());
+      var counterSub = quantityElement.siblings(".counter-sub");
+      var counterAdd = quantityElement.siblings(".counter-add");
+      var formProductOptionCounter = quantityElement.closest(
+        ".form-product-option-counter"
+      );
+      if (quantity <= 0) {
+        counterSub.addClass("disable");
+        formProductOptionCounter.removeClass("selected");
+        counterSub.removeClass("invert");
+        counterAdd.removeClass("invert");
+        quantityElement.removeClass("white").addClass("forest-green");
+      } else {
+        counterSub.removeClass("disable");
+        formProductOptionCounter.addClass("selected");
+        counterSub.addClass("invert");
+        counterAdd.addClass("invert");
+        quantityElement.removeClass("forest-green").addClass("white");
+      }
+      if (quantity >= maxQuantity) {
+        counterAdd.addClass("disable");
+      } else {
+        counterAdd.removeClass("disable");
+      }
+      if (!countersInitializing) updateTotal();
+    }
+    $(".counter-sub").click(function () {
+      var quantityElement = $(this).siblings(".quantity");
+      var quantity = parseInt(quantityElement.text());
+      if (quantity > minQuantity) {
+        quantity--;
+        quantityElement.text(quantity);
+        updateCounterButtons(quantityElement);
+      }
+    });
+    $(".counter-add").click(function () {
+      var quantityElement = $(this).siblings(".quantity");
+      var quantity = parseInt(quantityElement.text());
+      if (quantity < maxQuantity) {
+        quantity++;
+        quantityElement.text(quantity);
+        updateCounterButtons(quantityElement);
+      }
+    });
+    $(".bulk-counter-10").click(function () {
+      var quantity = parseInt(
+        $(this).parent().parent().find(".quantity").text()
+      );
+      if (quantity < maxQuantity) {
+        quantity += 10;
+        if (quantity > maxQuantity) {
+          quantity = maxQuantity;
+        }
+        $(this).parent().parent().find(".quantity").text(quantity);
+        updateCounterButtons($(this).parent().parent().find(".quantity"));
+      }
+    });
+    $(".bulk-counter-10, .bulk-counter-25, .bulk-counter-50")
+      .on("click.echoBookingLink",function (event) { event.preventDefault(); });
+    $(".bulk-counter-25").click(function () {
+      var quantity = parseInt(
+        $(this).parent().parent().find(".quantity").text()
+      );
+      if (quantity < maxQuantity) {
+        quantity += 25;
+        if (quantity > maxQuantity) {
+          quantity = maxQuantity;
+        }
+        $(this).parent().parent().find(".quantity").text(quantity);
+        updateCounterButtons($(this).parent().parent().find(".quantity"));
+      }
+    });
+    $(".bulk-counter-50").click(function () {
+      var quantity = parseInt(
+        $(this).parent().parent().find(".quantity").text()
+      );
+      if (quantity < maxQuantity) {
+        quantity += 50;
+        if (quantity > maxQuantity) {
+          quantity = maxQuantity;
+        }
+        $(this).parent().parent().find(".quantity").text(quantity);
+        updateCounterButtons($(this).parent().parent().find(".quantity"));
+      }
+    });
+    $(".quantity").each(function () {
+      updateCounterButtons($(this));
+    });
+    countersInitializing = false;
+    updateTotal();
+    /*
+     *
+     *
+     * ADDRESS AUTOCOMPLETE AND POSTCODE EXTRACTION
+     *
+     *
+     */
+    const addressInput = document.getElementById("address");
+    let selectedFromAutocomplete = false;
+    let autocompleteInitialized = false;
+    function initializeAddressAutocomplete() {
+      if (autocompleteInitialized) return true;
+      if (!window.google?.maps?.places?.Autocomplete || !addressInput) return false;
+      const autocomplete = new google.maps.places.Autocomplete(addressInput, {
+        componentRestrictions: { country: "nz" },
+        fields: ["address_components", "geometry", "place_id", "formatted_address"]
+      });
+      autocomplete.addListener("place_changed", function () {
+        selectedFromAutocomplete = true;
+        processPlaceSelection(autocomplete.getPlace());
+      });
+      autocompleteInitialized = true;
+      return true;
+    }
+    if (!initializeAddressAutocomplete()) {
+      const mapStarted = Date.now();
+      const mapRetry = window.setInterval(function () {
+        if (initializeAddressAutocomplete()) window.clearInterval(mapRetry);
+        else if (Date.now() - mapStarted > 10000) {
+          window.clearInterval(mapRetry);
+          console.error("[Echo Booking] Google Places Autocomplete is unavailable.");
+        }
+      }, 250);
+    }
+    const PLACE_ID_STORAGE_KEY = "echo:booking-place-id:v2";
+    let selectedPlaceId = sessionStorage.getItem(PLACE_ID_STORAGE_KEY) || "";
+    $("#address").on("input", function () {
+      selectedFromAutocomplete = false;
+      selectedPlaceId = "";
+      sessionStorage.removeItem(PLACE_ID_STORAGE_KEY);
+      ++activeDistanceRequest;
+      clearDistanceAndQuote();
+    });
+    function processPlaceSelection(place) {
+      if (!place || !place.geometry) {
+        alert(
+          "Please select your address from the Google Maps suggestions dropdown."
+        );
+        $("#address").val("");
+        $("#post-code").val("");
+        return;
+      }
+      if (!isLocationInNewZealand(place)) {
+        $("#address").val("");
+        $("#post-code").val("");
+        alert("Sorry, we currently don't pick up at that location!");
+        return;
+      }
+      var postcode = extractPostcodeFromAddressComponents(
+        place.address_components || []
+      );
+      if (postcode) {
+        $("#post-code").val(postcode);
+      }
+      if (!place.place_id) {
+        alert("Please select your address from the Google Maps suggestions dropdown.");
+        $("#address").val("");
+        $("#post-code").val("");
+        return;
+      }
+      selectedPlaceId = place.place_id;
+      sessionStorage.setItem(PLACE_ID_STORAGE_KEY, selectedPlaceId);
+      calculateAndDisplayDistance(place.geometry.location);
+    }
+    /*
+     * Collection catchments. Preserve original Auckland/Wellington depots
+     * and the Christchurch coverage added after the original v2 release.
+     * Google Distance Matrix values are in metres, not rounded kilometres.
+     */
+    const collectionCatchments = [
+      { name: "Auckland", location: { lat:-36.9249524, lng:174.8192662 } },
+      { name: "Wellington", location: { lat:-41.2370845, lng:174.9130315 } },
+      { name: "Christchurch", location: { lat:-43.5320544, lng:172.6362254 } }
+    ];
+    let activeDistanceRequest = 0;
+    function clearDistanceAndQuote() {
+      ++activeShippingQuote;
+      $("#distance").val("");
+      $("#shipping-cost").val("");
+      $("#grand-total").val("");
+    }
+    function selectNearestServiceCentre(elements) {
+      if (!Array.isArray(elements)) return null;
+      return elements
+        .map(function (element, index) {
+          return {
+            centre: collectionCatchments[index],
+            distanceMetres: element && element.distance && element.distance.value,
+            status: element && element.status
+          };
+        })
+        .filter(function (entry) {
+          return entry.centre && entry.status === "OK" &&
+            Number.isFinite(entry.distanceMetres) &&
+            entry.distanceMetres >= 0 &&
+            entry.distanceMetres <= 50000;
+        })
+        .sort(function (a, b) { return a.distanceMetres - b.distanceMetres; })[0] || null;
+    }
+    function calculateAndDisplayDistance(origin) {
+      const requestId = ++activeDistanceRequest;
+      clearDistanceAndQuote();
+      if (!window.google?.maps?.DistanceMatrixService) {
+        console.error("[Echo Booking] Google driving-distance service unavailable.");
+        return;
+      }
+      const service = new google.maps.DistanceMatrixService();
+      service.getDistanceMatrix(
+        {
+          origins: [origin],
+          destinations: collectionCatchments.map(function (c) { return c.location; }),
+          travelMode: "DRIVING"
+        },
+        function (response, status) {
+          if (requestId !== activeDistanceRequest) return;
+          if (status !== "OK" || !response || !response.rows ||
+              !response.rows[0] || !response.rows[0].elements) {
+            alert("Unable to calculate the collection distance. Please try again.");
+            clearDistanceAndQuote();
+            return;
+          }
+          const selected = selectNearestServiceCentre(response.rows[0].elements);
+          if (!selected) {
+            alert("Sorry, we currently don't pick up at that location!");
+            $("#address").val("");
+            $("#post-code").val("");
+            clearDistanceAndQuote();
+            return;
+          }
+          $("#distance").val((selected.distanceMetres / 1000).toFixed(2) + "km");
+          shippingCostAndGrandTotal();
+        }
+      );
+    }
+    function shippingCostAndGrandTotal() {
+      const requestId = ++activeShippingQuote;
+      const km = Number.parseFloat($("#distance").val());
+      const kg = Number.parseFloat($("#total-weight").val());
+      const subtotal = Number($("#total-price").val());
+      if (!quoteReady || !Number.isFinite(km) || km < 0 || km > 50 ||
+          !Number.isFinite(kg) || kg < 0 ||
+          !Number.isSafeInteger(subtotal) || subtotal < 0) {
+        $("#shipping-cost, #grand-total").val("");
+        return;
+      }
+      const url = "https://echo-pricing-logic.vercel.app/shipping?distance=" +
+        encodeURIComponent(km) + "&weight=" + encodeURIComponent(kg);
+      $.get(url).done(function (response) {
+        if (requestId !== activeShippingQuote) return;
+        const cents = Number(response);
+        if (!Number.isSafeInteger(cents) || cents < 0) {
+          $("#shipping-cost, #grand-total").val("");
+          return;
+        }
+        $("#shipping-cost").val(cents);
+        $("#grand-total").val(subtotal + cents);
+      }).fail(function () {
+        if (requestId !== activeShippingQuote) return;
+        $("#shipping-cost, #grand-total").val("");
+        console.error("Unable to obtain the collection charge.");
+      });
+    }
+    function extractPostcodeFromAddressComponents(components) {
+      for (var i = 0; i < components.length; i++) {
+        for (var j = 0; j < components[i].types.length; j++) {
+          if (components[i].types[j] === "postal_code") {
+            return components[i].long_name;
+          }
+        }
+      }
+      return null;
+    }
+    function isLocationInNewZealand(place) {
+      const components = Array.isArray(place.address_components) ? place.address_components : [];
+      return components.some(function (part) {
+        return Array.isArray(part.types) &&
+          part.types.includes("country") && part.short_name === "NZ";
+      });
+    }
+    /*
+     *
+     *
+     * ITEM DROPDOWN HEIGHT CALCULATION AND SELECTED CIRCLE
+     *
+     *
+     */
+    function itemDropdownCalculation() {
+      $(".dropdown-selected-circle").css("opacity", 0);
+      $(".form-product-dropdown").each(function () {
+        $(this).height(
+          Math.round($(this).find(".form-product-dropdown-title").outerHeight())
+        );
+      });
+      $(".form-product-dropdown-title")
+        .off("click.echoBookingDropdown")
+        .on("click.echoBookingDropdown", function () {
+        var dropdown = $(this).closest(".form-product-dropdown");
+        var dropdownOptions = dropdown.find(".form-product-dropdown-options");
+        if (
+          Math.round(dropdown.height()) ===
+          Math.round(
+            dropdown.find(".form-product-dropdown-title").outerHeight()
+          )
+        ) {
+          console.log("dropdown height is equal to title height");
+          console.log("dropdown height: " + Math.round(dropdown.height()));
+          console.log(
+            "title height: " +
+              Math.round(
+                dropdown.find(".form-product-dropdown-title").outerHeight()
+              )
+          );
+          dropdown.height(
+            Math.round(
+              dropdown.find(".form-product-dropdown-title").outerHeight()
+            ) + Math.round(dropdownOptions.outerHeight())
+          );
+          console.log("actual dropdown height: " + dropdown.height());
+          console.log(
+            "actual title height: " +
+              dropdown.find(".form-product-dropdown-title").outerHeight()
+          );
+          $(this).find(".form-field-icon.right").addClass("rotate");
+          dropdown.find(".dropdown-selected-circle").css("opacity", 0);
+        } else {
+          console.log("dropdown height is not equal to title height");
+          console.log("dropdown height: " + Math.round(dropdown.height()));
+          console.log(
+            "title height: " +
+              Math.round(
+                dropdown.find(".form-product-dropdown-title").outerHeight()
+              )
+          );
+          dropdown.height(
+            Math.round(
+              dropdown.find(".form-product-dropdown-title").outerHeight()
+            )
+          );
+          console.log("actual dropdown height: " + dropdown.height());
+          console.log(
+            "actual title height: " +
+              dropdown.find(".form-product-dropdown-title").outerHeight()
+          );
+          $(this).find(".form-field-icon.right").removeClass("rotate");
+          if (dropdown.find(".form-product-option-counter.selected").length) {
+            dropdown.find(".dropdown-selected-circle").css("opacity", 1);
+          } else {
+            dropdown.find(".dropdown-selected-circle").css("opacity", 0);
+          }
+        }
+      });
+    }
+    itemDropdownCalculation();
+    $("#res-form-button, #com-form-button").click(function () {
+      itemDropdownCalculation();
+      for (let i = 0; i < $(".form-product-dropdown-title").length; i++) {
+        if (
+          $(".form-product-dropdown-title")
+            .eq(i)
+            .find(".form-field-icon.right")
+            .hasClass("rotate")
+        ) {
+          $(".form-product-dropdown-title").eq(i).click();
+        }
+      }
+    });
+    let lastWindowWidth = window.innerWidth;
+    $(window).on("resize", function () {
+      const newWidth = window.innerWidth;
+      if (newWidth !== lastWindowWidth) {
+        lastWindowWidth = newWidth;
+        itemDropdownCalculation();
+        $(".form-product-dropdown-title").each(function () {
+          const $icon = $(this).find(".form-field-icon.right");
+          if ($icon.hasClass("rotate")) {
+            $(this).click();
+          }
+        });
+      }
+    });
+    /*
+     *
+     *
+     * IMAGE UPLOAD & LINK CONVERTION
+     *
+     *
+     */
+    /*
+     *
+     *
+     * FORM SANITIZATION
+     *
+     *
+     */
+    $("#on-site-phone, #bac-phone, #bac-billing-phone, #bac-contact-phone").on(
+      "input",
+      function () {
+        var enteredValue = $(this).val();
+        if (/[^0-9+\-*\s]/.test(enteredValue)) {
+          $(this).val(enteredValue.slice(0, -1));
+        }
+      }
+    );
+    function isNotEmpty(value) {
+      return value.trim() !== "";
+    }
+    function isNotZero(value) {
+      return parseFloat(value) !== 0;
+    }
+    function isValidNumber(value) {
+      return !isNaN(value) && value.indexOf(".") === -1;
+    }
+    function isValidName(value) {
+      return typeof value === 'string' && /^[\p{L}\p{M}\s.'’-]+$/u.test(value.trim());
+    }
+    function isValidEmail(value) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+    }
+    function isValidPhoneNumber(value) {
+      return /^[+()-\s\d]+$/.test(value);
+    }
+    function isChecked(value) {
+      return $("#" + value).is(":checked");
+    }
+    function isSelected(value) {
+      return $("#" + value).val() !== "";
+    }
+    const fieldsResidential = [
+      {
+        id: "address",
+        name: "Address",
+        validations: [isNotEmpty],
+      },
+      {
+        id: "post-code",
+        name: "Post Code",
+        validations: [isNotEmpty],
+      },
+      {
+        id: "day1",
+        name: "Day 1",
+        validations: [isNotEmpty],
+      },
+      {
+        id: "day2",
+        name: "Day 2",
+        validations: [isNotEmpty],
+      },
+      {
+        id: "day3",
+        name: "Day 3",
+        validations: [isNotEmpty],
+      },
+      {
+        id: "total-unique-items",
+        name: "Total Unique Items",
+        validations: [isNotZero, isNotEmpty],
+      },
+      {
+        id: "grand-total",
+        name: "Grand Total",
+        validations: [isValidNumber, isNotEmpty],
+      },
+      {
+        id: "bac-first-name",
+        name: "First Name",
+        validations: [isValidName, isNotEmpty],
+      },
+      {
+        id: "bac-surname",
+        name: "Surname",
+        validations: [isValidName, isNotEmpty],
+      },
+      {
+        id: "bac-email-address",
+        name: "Email Address",
+        validations: [isValidEmail, isNotEmpty],
+      },
+      {
+        id: "bac-phone",
+        name: "Phone",
+        validations: [isValidPhoneNumber, isNotEmpty],
+      },
+      {
+        id: "bac-terms-and-conditions-checkbox",
+        name: "Terms and Conditions Checkbox",
+        validations: ["bac-terms-and-conditions-checkbox"],
+      },
+    ];
+    const fieldsCommercial = [
+      {
+        id: "address",
+        name: "Address",
+        validations: [isNotEmpty],
+      },
+      {
+        id: "post-code",
+        name: "Post Code",
+        validations: [isNotEmpty],
+      },
+      {
+        id: "on-site-full-name",
+        name: "On-Site Full Name",
+        validations: [isValidName, isNotEmpty],
+      },
+      {
+        id: "on-site-phone",
+        name: "On-Site Phone",
+        validations: [isValidPhoneNumber, isNotEmpty],
+      },
+      {
+        id: "day1",
+        name: "Day 1",
+        validations: [isNotEmpty],
+      },
+      {
+        id: "day2",
+        name: "Day 2",
+        validations: [isNotEmpty],
+      },
+      {
+        id: "day3",
+        name: "Day 3",
+        validations: [isNotEmpty],
+      },
+      {
+        id: "total-unique-items",
+        name: "Total Unique Items",
+        validations: [isNotZero, isNotEmpty],
+      },
+      {
+        id: "grand-total",
+        name: "Grand Total",
+        validations: [isValidNumber, isNotEmpty],
+      },
+      {
+        id: "bac-company-name",
+        name: "Company Name",
+        validations: [isNotEmpty],
+      },
+      {
+        id: "bac-company-size",
+        name: "Company Size",
+        validations: ["bac-company-size", isSelected],
+      },
+      {
+        id: "bac-business-sector",
+        name: "Business Sector",
+        validations: ["bac-business-sector", isSelected],
+      },
+      {
+        id: "bac-billing-first-name",
+        name: "Billing First Name",
+        validations: [isValidName, isNotEmpty],
+      },
+      {
+        id: "bac-billing-surname",
+        name: "Billing Surname",
+        validations: [isValidName, isNotEmpty],
+      },
+      {
+        id: "bac-billing-email-address",
+        name: "Billing Email Address",
+        validations: [isValidEmail, isNotEmpty],
+      },
+      {
+        id: "bac-billing-phone",
+        name: "Billing Phone",
+        validations: [isValidPhoneNumber, isNotEmpty],
+      },
+      {
+        id: "bac-contact-first-name",
+        name: "Contact First Name",
+        validations: [isValidName, isNotEmpty],
+      },
+      {
+        id: "bac-contact-surname",
+        name: "Contact Surname",
+        validations: [isValidName, isNotEmpty],
+      },
+      {
+        id: "bac-contact-email-address",
+        name: "Contact Email Address",
+        validations: [isValidEmail, isNotEmpty],
+      },
+      {
+        id: "bac-contact-phone",
+        name: "Contact Phone",
+        validations: [isValidPhoneNumber, isNotEmpty],
+      },
+      {
+        id: "bac-terms-and-conditions-checkbox",
+        name: "Terms and Conditions Checkbox",
+        validations: ["bac-terms-and-conditions-checkbox"],
+      },
+    ];
+    function applicableFields(type) {
+      if (type === "Residential") return fieldsResidential;
+      return $("#contact-billing-same-checkbox").is(":checked")
+        ? fieldsCommercial.filter(function (field) {
+            return !field.id.startsWith("bac-contact-");
+          })
+        : fieldsCommercial;
+    }
+    function generateValidationMessage(type, incompleteFields) {
+      let baseMessage = `Note: To help us process your ${type.toLowerCase()} request efficiently, please make sure to complete `;
+      const fieldDescriptions = {
+        address: "your address",
+        "post-code": "your postal code",
+        day1: "the first preferred date",
+        day2: "the second preferred date",
+        day3: "the third preferred date",
+        "bac-first-name": "your first name",
+        "bac-surname": "your surname",
+        "bac-email-address": "your email address",
+        "bac-phone": "your phone number",
+        "bac-terms-and-conditions-checkbox":
+          "the terms and conditions confirmation",
+        "on-site-full-name": "the on-site contact's full name",
+        "on-site-phone": "the on-site contact's phone number",
+        "bac-company-name": "your company name",
+        "bac-company-size": "your company size",
+        "bac-business-sector": "your business sector",
+        "bac-billing-first-name": "the billing contact's first name",
+        "bac-billing-surname": "the billing contact's surname",
+        "bac-billing-email-address": "the billing contact's email address",
+        "bac-billing-phone": "the billing contact's phone number",
+        "bac-contact-first-name": "the primary contact's first name",
+        "bac-contact-surname": "the primary contact's surname",
+        "bac-contact-email-address": "the primary contact's email address",
+        "bac-contact-phone": "the primary contact's phone number",
+        "total-unique-items":
+          "selection of at least 1 item from the list of items to be collected",
+        "grand-total": "",
+      };
+      let fieldsToMention = incompleteFields.filter(
+        (field) =>
+          fieldDescriptions[field] && fieldDescriptions[field].length > 0
+      );
+      let fieldList = fieldsToMention
+        .map((fieldId) => fieldDescriptions[fieldId] || fieldId)
+        .join(", ")
+        .replace(/, ([^,]*)$/, ", and $1");
+      let fullMessage =
+        fieldList.length > 0
+          ? `${baseMessage}${fieldList}.`
+          : `${baseMessage}all necessary fields.`;
+      fullMessage +=
+        "<br><br>Ensuring all details are filled accurately aids in a smooth and quick processing.";
+      return fullMessage;
+    }
+    function validateFields(fields, type) {
+      let incompleteFields = [];
+      let ticker = 0; // Initialize ticker for counting completed fields
+      fields.forEach((field) => {
+        const value = $("#" + field.id).val();
+        let isValid = true;
+        const validations = field.validations;
+        validations.forEach((validation) => {
+          if (typeof validation === "function") {
+            if (!validation(value)) {
+              isValid = false;
+            }
+          } else if (validation === "bac-terms-and-conditions-checkbox") {
+            if (!isChecked(field.id)) {
+              isValid = false;
+            }
+          } else if (
+            validation === "bac-company-size" ||
+            validation === "bac-business-sector"
+          ) {
+            if (!isSelected(field.id)) {
+              isValid = false;
+            }
+          }
+          return false;
+        });
+        if (!isValid) {
+          incompleteFields.push(field.id); // Collect IDs of incomplete fields
+        } else {
+          ticker++; // Increment ticker for each valid field
+        }
+      });
+      if (incompleteFields.length > 0) {
+        $("#form-validator-text").html(
+          generateValidationMessage(type, incompleteFields)
+        );
+        $("#form-validator-wrapper").show();
+      } else {
+        $("#form-validator-wrapper").hide();
+      }
+      if (ticker === fields.length) {
+        $("#review-booking").removeClass("disable");
+      } else {
+        $("#review-booking").addClass("disable");
+      }
+      return ticker; // Although it's not necessary to return the ticker, it might be useful depending on your setup
+    }
+    const triggerValidation = setInterval(function () {
+      const type =
+        $("#collection-type").val() === "Residential"
+          ? "Residential"
+          : "Commercial";
+      const fields = applicableFields(type);
+      validateFields(fields, type); // Now solely responsible for updating the UI based on validation
+    }, 250);
+    /*
+     *
+     *
+     * FORM LOGIC
+     *
+     *
+     */
+    {
+      const bookingForm = document.getElementById("bac-main-form");
+      bookingForm.addEventListener("submit", function (event) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        $("#bac-title").text("Processing...");
+        const currentType = $("#collection-type").val() === "Commercial"
+          ? "Commercial" : "Residential";
+        const requiredFields = applicableFields(currentType);
+        if (validateFields(requiredFields, currentType) !== requiredFields.length) {
+          return false;
+        }
+        var formData = $(this).serializeArray(); // Example serialization
+        if (!quoteReady || !Number.isSafeInteger(Number($("#grand-total").val())) ||
+            Number($("#grand-total").val()) < 50) {
+          alert("Please wait for the collection pricing to finish and check your address.");
+          return false;
+        }
+        sessionStorage.setItem("formData", JSON.stringify(formData));
+        const fields = {};
+        $("#bac-main-form").find("input, select, textarea").each(function () {
+          if (!this.id) return;
+          fields[this.id] = this.type === "checkbox" || this.type === "radio"
+            ? this.checked === true
+            : this.value;
+        });
+        const items = [];
+        $(".form-product-option-counter.selected").each(function () {
+          const quantityEl = $(this).find(".quantity");
+          const id = quantityEl.attr("data-item-id");
+          const quantity = Number(quantityEl.text());
+          if (/^item(?:[1-9]|[12][0-9]|3[0-4])$/.test(id || "") &&
+              Number.isSafeInteger(quantity) && quantity > 0) {
+            items.push({ id, quantity });
+          }
+        });
+        const collectionType = $("#collection-type").val();
+        const draft = {
+          version: 2,
+          collectionType,
+          fields,
+          items,
+          addressSelection: {
+            placeId: selectedPlaceId || sessionStorage.getItem(PLACE_ID_STORAGE_KEY)
+          }
+        };
+        if (!draft.addressSelection.placeId || !items.length ||
+            !["Residential", "Commercial"].includes(collectionType)) {
+          alert("Please select a valid collection address and at least one item.");
+          $("#bac-title").text("Book A Collection");
+          return false;
+        }
+        sessionStorage.setItem("echo:new-booking:v2", JSON.stringify(draft));
+        window.location.href = "/booking-review"; // Change this to your review page URL
+        return false;
+      }, true);
+    }
+    /*
+     *
+     *
+     * FORM PRE-FILLING
+     *
+     *
+     */
+    (function restoreBookingDraft() {
+      let draft;
+      try {
+        draft = JSON.parse(sessionStorage.getItem("echo:new-booking:v2") || "null");
+      } catch {
+        sessionStorage.removeItem("echo:new-booking:v2");
+        return;
+      }
+      if (!draft || draft.version !== 2 || !draft.fields ||
+          !Array.isArray(draft.items)) return;
+      if (draft.collectionType === "Commercial") {
+        $("#com-form-button").trigger("click");
+      } else {
+        $("#res-form-button").trigger("click");
+      }
+      for (const [id, value] of Object.entries(draft.fields)) {
+        if (id.startsWith("cf-")) continue;
+        const element = document.getElementById(id);
+        if (!element || !document.getElementById("bac-main-form").contains(element)) continue;
+        if (element.type === "checkbox" || element.type === "radio") {
+          if (element.checked !== Boolean(value)) element.click();
+          else $(element).trigger("change");
+        } else if (typeof value === "string" || typeof value === "number") {
+          if (element._flatpickr && /^\d{2}\/\d{2}\/\d{4}$/.test(String(value))) {
+            element._flatpickr.setDate(String(value), false, "d/m/Y");
+          } else {
+            $(element).val(value);
+          }
+        }
+      }
+      const previousPlaceId = draft.addressSelection?.placeId;
+      if (typeof previousPlaceId === "string" && previousPlaceId) {
+        selectedPlaceId = previousPlaceId;
+        selectedFromAutocomplete = true;
+        sessionStorage.setItem(PLACE_ID_STORAGE_KEY, previousPlaceId);
+      }
+      const quantities = new Map(
+        draft.items.filter(item => /^item(?:[1-9]|[12][0-9]|3[0-4])$/.test(item.id) &&
+          Number.isSafeInteger(item.quantity) && item.quantity > 0 && item.quantity <= 999)
+          .map(item => [item.id, item.quantity])
+      );
+      countersInitializing = true;
+      $(".quantity").each(function () {
+        const q = quantities.get($(this).attr("data-item-id")) || 0;
+        $(this).text(q);
+        updateCounterButtons($(this));
+      });
+      countersInitializing = false;
+      updateTotal();
+    })();
+  }
+  }
+  window.Webflow = window.Webflow || [];
+  window.Webflow.push(initializeEchoBooking);
+  if (document.readyState === "complete") initializeEchoBooking();
+  else window.addEventListener("load", initializeEchoBooking, {once:true});
+})();
+</script>

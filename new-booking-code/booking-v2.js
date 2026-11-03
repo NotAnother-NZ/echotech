@@ -1,6 +1,14 @@
-$(document).ready(function () {
+/* Echo Booking Page 1: wait for Webflow's jQuery/runtime after inline Embed. */
+(() => {
+  "use strict";
+  let echoBookingInitialized = false;
+  function initializeEchoBooking() {
+    if (echoBookingInitialized || !window.jQuery ||
+        !document.getElementById("bac-form-wrapper-new")) return;
+    echoBookingInitialized = true;
+    const $ = window.jQuery;
   //if #bac-form-wrapper is available
-  copyTimes = 0;
+  let copyTimes = 0;
   if ($("#bac-form-wrapper-new").length) {
     /*
      *
@@ -51,7 +59,7 @@ $(document).ready(function () {
     //hide #data-erasure-needed by default
     $("#data-erasure-needed").hide();
     //remove clicked class from #data-erasure-service-checkbox by default
-    $("#data-erasure-service-checkbox").removeClass("clicked");
+    $("#data-erasure-service-checkbox").prop("checked", false).trigger("change");
     //set the text of #contact-details-title to "Contact Details" by default
     $("#contact-details-title").text("Contact Details");
     //show #contact-details by default
@@ -78,7 +86,7 @@ $(document).ready(function () {
     $("#business-contact-details").hide();
     $("#contact-billing-same").hide();
     //uncheck #contact-billing-same-checkbox by default - by removing .clicked class from it
-    $("#contact-billing-same-checkbox").removeClass("clicked");
+    $("#contact-billing-same-checkbox").prop("checked", false).trigger("change");
     //set #bac-contact-first-name, #bac-contact-surname, #bac-contact-email-address, #bac-contact-phone to not required
     $("#bac-contact-first-name").prop("required", false);
     $("#bac-contact-surname").prop("required", false);
@@ -121,7 +129,7 @@ $(document).ready(function () {
       //set the value of #data-erasure-needed to "No"
       $("#data-erasure-needed").val("No");
       //remove .clicked class from #data-erasure-service-checkbox
-      $("#data-erasure-service-checkbox").removeClass("clicked");
+      $("#data-erasure-service-checkbox").prop("checked", false).trigger("change");
       //set the text of #contact-details-title to "Contact Details"
       $("#contact-details-title").text("Contact Details");
       //show #contact-details
@@ -148,7 +156,7 @@ $(document).ready(function () {
       $("#shipping-note-wrapper").show();
 
       //uncheck #contact-billing-same-checkbox - by removing .clicked class from it
-      $("#contact-billing-same-checkbox").removeClass("clicked");
+      $("#contact-billing-same-checkbox").prop("checked", false).trigger("change");
       //set #bac-contact-first-name, #bac-contact-surname, #bac-contact-email-address, #bac-contact-phone to not required
       $("#bac-contact-first-name").prop("required", false);
       $("#bac-contact-surname").prop("required", false);
@@ -185,7 +193,7 @@ $(document).ready(function () {
       //set the value of #data-erasure-needed to "No"
       $("#data-erasure-needed").val("No");
       //remove .clicked class from #data-erasure-service-checkbox
-      $("#data-erasure-service-checkbox").removeClass("clicked");
+      $("#data-erasure-service-checkbox").prop("checked", false).trigger("change");
       //set the text of #contact-details-title to "Business & Contact Details"
       $("#contact-details-title").text("Business & Contact Details");
       //hide #contact-details
@@ -212,9 +220,7 @@ $(document).ready(function () {
       $("#business-contact-details").hide();
       $("#contact-billing-same").show();
       //remove clicked class from #contact-billing-same-checkbox
-      $("#contact-billing-same-checkbox").removeClass("clicked");
-      //simulate a click on #contact-billing-same-checkbox
-      $("#contact-billing-same-checkbox").click();
+      $("#contact-billing-same-checkbox").prop("checked", true).trigger("change");
       //set #bac-company-name, #bac-company-size, #bac-business-sector, #bac-billing-first-name, #bac-billing-surname, #bac-billing-email-address, #bac-billing-phone to required
       $("#bac-company-name").prop("required", true);
       $("#bac-company-size").prop("required", true);
@@ -243,50 +249,25 @@ $(document).ready(function () {
     });
 
     //if #contact-billing-same-checkbox is clicked, toggle the .clicked class on it
-    $("#contact-billing-same-checkbox").click(function () {
-      $(this).toggleClass("clicked");
-      //check if #contact-billing-same-checkbox has the .clicked class, if so hide #business-contact-details, otherwise show it
-      if ($(this).hasClass("clicked")) {
-        $("#business-contact-details").hide();
-        //set #bac-contact-first-name, #bac-contact-surname, #bac-contact-email-address, #bac-contact-phone to not required
-        $("#bac-contact-first-name").prop("required", false);
-        $("#bac-contact-surname").prop("required", false);
-        $("#bac-contact-email-address").prop("required", false);
-        $("#bac-contact-phone").prop("required", false);
-      } else {
-        $("#business-contact-details").show();
-        //set #bac-contact-first-name, #bac-contact-surname, #bac-contact-email-address, #bac-contact-phone to required
-        $("#bac-contact-first-name").prop("required", true);
-        $("#bac-contact-surname").prop("required", true);
-        $("#bac-contact-email-address").prop("required", true);
-        $("#bac-contact-phone").prop("required", true);
-      }
+    function updateCheckboxAppearance(input) {
+      const el = $(input), checked = Boolean(input.checked);
+      el.toggleClass("clicked", checked);
+      el.closest(".w-checkbox").find(".w-checkbox-input")
+        .toggleClass("w--redirected-checked", checked);
+    }
+    $("#contact-billing-same-checkbox").on("change", function () {
+      updateCheckboxAppearance(this);
+      const separate = !this.checked;
+      $("#business-contact-details").toggle(separate);
+      $("#bac-contact-first-name, #bac-contact-surname, #bac-contact-email-address, #bac-contact-phone")
+        .prop("required", separate);
     });
-
-    //if #data-erasure-service-checkbox is clicked, toggle the .clicked class on it
-    $("#data-erasure-service-checkbox").click(function () {
-      $(this).toggleClass("clicked");
-      //check if #data-erasure-service-checkbox has the .clicked class, if so set the value of #data-erasure-needed to "Yes", otherwise set it to "No"
-      if ($(this).hasClass("clicked")) {
-        $("#data-erasure-needed").val("Yes");
-        //set the text of #bac-submit to "Confirm Booking"
-        // $("#bac-submit").val("Confirm Booking");
-        //show #bac-submit and hide #bac-pay
-        $("#bac-submit").show();
-        $("#bac-pay").hide();
-      } else {
-        $("#data-erasure-needed").val("No");
-        //set the text of #bac-submit to "Complete Payment"
-        // $("#bac-submit").val("Complete Payment");
-        //hide #bac-submit and show #bac-pay
-        $("#bac-submit").hide();
-        $("#bac-pay").show();
-      }
+    $("#data-erasure-service-checkbox").on("change", function () {
+      updateCheckboxAppearance(this);
+      $("#data-erasure-needed").val(this.checked ? "Yes" : "No");
     });
-
-    //if #bac-terms-and-conditions-checkbox is clicked, toggle the .clicked class on it
-    $("#bac-terms-and-conditions-checkbox").click(function () {
-      $(this).toggleClass("clicked");
+    $("#bac-terms-and-conditions-checkbox").on("change", function () {
+      updateCheckboxAppearance(this);
     });
 
     /*
@@ -299,7 +280,17 @@ $(document).ready(function () {
 
     //go through all the .quantity elements, and give them an attribute of data-item-id starting from item1
     $(".quantity").each(function (index) {
-      $(this).attr("data-item-id", "item" + (index + 1));
+      // Product IDs come from the associated Webflow item, not DOM position.
+      const declaredId = $(this).attr("data-item-id");
+      const displayedItemId = $(this).closest(".form-product-option")
+        .find(".item-name[id]").first().attr("id");
+      const candidate = /^item(?:[1-9]|[12][0-9]|3[0-4])$/.test(declaredId || "")
+        ? declaredId : displayedItemId;
+      if (/^item(?:[1-9]|[12][0-9]|3[0-4])$/.test(candidate || "")) {
+        $(this).attr("data-item-id", candidate);
+      } else {
+        console.error("[Echo Booking] Missing product ID at counter index",index);
+      }
     });
 
     // Initialize total cost and weight
@@ -310,84 +301,91 @@ $(document).ready(function () {
     // Initialize an empty array to store unique item IDs
     var uniqueItemIds = [];
 
-    // Function to update total cost and weight
-    function updateTotal() {
+    // Calculate all item lines together, then commit one consistent quote.
+    // Older per-item callbacks could overwrite a newer selection and produce
+    // incorrect weights or totals when customers changed quantities quickly.
+    let activeItemQuote = 0;
+    let activeShippingQuote = 0;
+    let quoteReady = false;
+    let countersInitializing = true;
+    async function updateTotal() {
+      const requestId = ++activeItemQuote;
+      ++activeShippingQuote;
+      quoteReady = false;
       totalCost = 0;
       totalWeight = 0;
       orderDetails = [];
       uniqueItemIds = [];
+      $("#total-price, #shipping-cost, #grand-total").val("");
 
-      const selectedItemsSet = new Set();
-
+      const selected = [];
       $(".form-product-option-counter.selected").each(function () {
-        var itemId = $(this).find(".quantity").attr("data-item-id");
-        var quantity = parseInt($(this).find(".quantity").text());
-
-        if (uniqueItemIds.indexOf(itemId) === -1) {
-          uniqueItemIds.push(itemId);
+        const counter = $(this);
+        const quantityEl = counter.find(".quantity");
+        const id = quantityEl.attr("data-item-id");
+        const quantity = Number(quantityEl.text());
+        if (/^item(?:[1-9]|[12][0-9]|3[0-4])$/.test(id || "") &&
+            Number.isSafeInteger(quantity) && quantity > 0 && quantity <= 999) {
+          selected.push({id, quantity, counter});
         }
-
-        var apiUrl = `https://echo-pricing-logic.vercel.app/item?id=${itemId}&quantity=${quantity}`;
-
-        var self = this;
-
-        $(this).find(".counter-add, .counter-sub").addClass("disable");
-
-        $.get(apiUrl, function (response) {
-          var [price, weight, name] = response.split(", ");
-          totalCost += parseInt(price);
-          totalWeight += parseInt(weight);
-
-          if (!selectedItemsSet.has(name)) {
-            selectedItemsSet.add(name);
-            orderDetails.push({
-              itemName: name,
-              unitPrice: "$" + parseInt(price) / quantity,
-              quantity: quantity + "x",
-              price: "$" + price,
-            });
-          }
-
-          $("#total-cost").text(totalCost.toFixed(2));
-          $("#total-weight").text(totalWeight);
-
-          var formattedOrderDetails = orderDetails.map(function (item) {
-            return (
-              item.itemName +
-              ", " +
-              item.unitPrice +
-              ", " +
-              item.quantity +
-              ", " +
-              item.price
-            );
-          });
-
-          $("#order-details").val(formattedOrderDetails.join("\n"));
-          $("#total-price").val(totalCost * 100);
-          $("#total-weight").val(totalWeight + "kg");
-
-          shippingCostAndGrandTotal();
-
-          $(self).find(".counter-add, .counter-sub").removeClass("disable");
-
-          $("#total-unique-items").val(uniqueItemIds.length);
-          copyTimes = uniqueItemIds.length;
-        }).fail(function () {
-          console.error("Failed to fetch item details for", itemId);
-          $(self).find(".counter-add, .counter-sub").removeClass("disable");
-        });
       });
-
-      if ($(".form-product-option-counter.selected").length === 0) {
+      if (!selected.length) {
         $("#order-details").val("");
-        $("#total-cost").val("");
+        $("#total-cost").text("0.00");
         $("#total-weight").val("");
-        $("#total-price").val("");
-        $("#shipping-cost").val("");
-        $("#grand-total").val("");
-        $("#distance").val("");
         $("#total-unique-items").val("0");
+        copyTimes = 0;
+        return;
+      }
+
+      selected.forEach(line => line.counter.find(".counter-add, .counter-sub").addClass("disable"));
+      try {
+        const data = await Promise.all(selected.map(async function (line) {
+          const url = "https://echo-pricing-logic.vercel.app/item?id=" +
+            encodeURIComponent(line.id) + "&quantity=" + line.quantity;
+          const response = await $.get(url);
+          const parts = String(response).split(", ");
+          const amount = Number(parts[0]);
+          const weight = Number(parts[1]);
+          const name = parts.slice(2).join(", ").trim();
+          if (!Number.isFinite(amount) || amount < 0 ||
+              !Number.isFinite(weight) || weight < 0 || !name) {
+            throw new Error("The collection item pricing response is invalid.");
+          }
+          return {id:line.id,quantity:line.quantity,amount,weight,name};
+        }));
+        if (requestId !== activeItemQuote) return;
+
+        totalCost = data.reduce((sum,item) => sum + item.amount,0);
+        totalWeight = data.reduce((sum,item) => sum + item.weight,0);
+        orderDetails = data.map(item => ({
+          itemName:item.name,
+          unitPrice:"$" + (item.amount / item.quantity).toFixed(2),
+          quantity:item.quantity + "x",
+          price:"$" + item.amount.toFixed(2)
+        }));
+        uniqueItemIds = data.map(item => item.id);
+
+        $("#total-cost").text(totalCost.toFixed(2));
+        $("#total-weight").val(totalWeight + "kg");
+        $("#order-details").val(orderDetails.map(item => [
+          item.itemName,item.unitPrice,item.quantity,item.price
+        ].join(", ")).join("\n"));
+        $("#total-price").val(Math.round(totalCost * 100));
+        $("#total-unique-items").val(uniqueItemIds.length);
+        copyTimes = uniqueItemIds.length;
+        quoteReady = true;
+        shippingCostAndGrandTotal();
+      } catch (error) {
+        if (requestId !== activeItemQuote) return;
+        quoteReady = false;
+        $("#total-price, #shipping-cost, #grand-total").val("");
+        console.error("Unable to calculate item quote:",error.message);
+        alert("We couldn't calculate the selected items. Please try again.");
+      } finally {
+        if (requestId === activeItemQuote) {
+          selected.forEach(line => line.counter.find(".counter-add, .counter-sub").removeClass("disable"));
+        }
       }
     }
 
@@ -425,8 +423,8 @@ $(document).ready(function () {
         counterAdd.removeClass("disable");
       }
 
-      // Update total cost and weight
-      updateTotal();
+      // Batch initial counter state; the first quote is calculated once.
+      if (!countersInitializing) updateTotal();
     }
 
     // Click event handler for counter subtract button
@@ -472,6 +470,10 @@ $(document).ready(function () {
       }
     });
 
+    // Bulk links must not navigate to '#', which jumps the page.
+    $(".bulk-counter-10, .bulk-counter-25, .bulk-counter-50")
+      .on("click.echoBookingLink",function (event) { event.preventDefault(); });
+
     //do the same but for .bulk-counter-25
     $(".bulk-counter-25").click(function () {
       var quantity = parseInt(
@@ -508,6 +510,8 @@ $(document).ready(function () {
     $(".quantity").each(function () {
       updateCounterButtons($(this));
     });
+    countersInitializing = false;
+    updateTotal();
 
     /*
      *
@@ -517,22 +521,47 @@ $(document).ready(function () {
      *
      */
 
-    var addressInput = document.getElementById("address");
-    var autocomplete = new google.maps.places.Autocomplete(addressInput, {
-      componentRestrictions: {
-        country: "nz",
-      }, // Restrict autocomplete to New Zealand
-    });
+    const addressInput = document.getElementById("address");
+    let selectedFromAutocomplete = false;
+    let autocompleteInitialized = false;
 
-    var selectedFromAutocomplete = false;
+    function initializeAddressAutocomplete() {
+      if (autocompleteInitialized) return true;
+      if (!window.google?.maps?.places?.Autocomplete || !addressInput) return false;
+      const autocomplete = new google.maps.places.Autocomplete(addressInput, {
+        componentRestrictions: { country: "nz" },
+        fields: ["address_components", "geometry", "place_id", "formatted_address"]
+      });
+      autocomplete.addListener("place_changed", function () {
+        selectedFromAutocomplete = true;
+        processPlaceSelection(autocomplete.getPlace());
+      });
+      autocompleteInitialized = true;
+      return true;
+    }
+    if (!initializeAddressAutocomplete()) {
+      const mapStarted = Date.now();
+      const mapRetry = window.setInterval(function () {
+        if (initializeAddressAutocomplete()) window.clearInterval(mapRetry);
+        else if (Date.now() - mapStarted > 10000) {
+          window.clearInterval(mapRetry);
+          console.error("[Echo Booking] Google Places Autocomplete is unavailable.");
+        }
+      }, 250);
+    }
 
-    autocomplete.addListener("place_changed", function () {
-      selectedFromAutocomplete = true;
-      processPlaceSelection(autocomplete.getPlace());
+    const PLACE_ID_STORAGE_KEY = "echo:booking-place-id:v2";
+    let selectedPlaceId = sessionStorage.getItem(PLACE_ID_STORAGE_KEY) || "";
+    $("#address").on("input", function () {
+      selectedFromAutocomplete = false;
+      selectedPlaceId = "";
+      sessionStorage.removeItem(PLACE_ID_STORAGE_KEY);
+      ++activeDistanceRequest;
+      clearDistanceAndQuote();
     });
 
     function processPlaceSelection(place) {
-      if (!place.geometry) {
+      if (!place || !place.geometry) {
         // alert("Selected place does not have a geometry.");
         alert(
           "Please select your address from the Google Maps suggestions dropdown."
@@ -552,95 +581,128 @@ $(document).ready(function () {
       }
 
       var postcode = extractPostcodeFromAddressComponents(
-        place.address_components
+        place.address_components || []
       );
       if (postcode) {
         $("#post-code").val(postcode);
       }
 
+      if (!place.place_id) {
+        alert("Please select your address from the Google Maps suggestions dropdown.");
+        $("#address").val("");
+        $("#post-code").val("");
+        return;
+      }
+      selectedPlaceId = place.place_id;
+      sessionStorage.setItem(PLACE_ID_STORAGE_KEY, selectedPlaceId);
       calculateAndDisplayDistance(place.geometry.location);
     }
 
-    function calculateAndDisplayDistance(origin) {
-      const aucklandCatchment = new google.maps.LatLng(
-        -36.9249524,
-        174.8192662
-      );
-      const wellingtonCatchment = new google.maps.LatLng(
-        -41.2370845,
-        174.9130315
-      );
+    /*
+     * Collection catchments. Preserve original Auckland/Wellington depots
+     * and the Christchurch coverage added after the original v2 release.
+     * Google Distance Matrix values are in metres, not rounded kilometres.
+     */
+    const collectionCatchments = [
+      { name: "Auckland", location: { lat:-36.9249524, lng:174.8192662 } },
+      { name: "Wellington", location: { lat:-41.2370845, lng:174.9130315 } },
+      { name: "Christchurch", location: { lat:-43.5320544, lng:172.6362254 } }
+    ];
+    let activeDistanceRequest = 0;
 
+    function clearDistanceAndQuote() {
+      ++activeShippingQuote;
+      $("#distance").val("");
+      $("#shipping-cost").val("");
+      $("#grand-total").val("");
+    }
+
+    function selectNearestServiceCentre(elements) {
+      if (!Array.isArray(elements)) return null;
+      return elements
+        .map(function (element, index) {
+          return {
+            centre: collectionCatchments[index],
+            distanceMetres: element && element.distance && element.distance.value,
+            status: element && element.status
+          };
+        })
+        .filter(function (entry) {
+          return entry.centre && entry.status === "OK" &&
+            Number.isFinite(entry.distanceMetres) &&
+            entry.distanceMetres >= 0 &&
+            entry.distanceMetres <= 50000;
+        })
+        .sort(function (a, b) { return a.distanceMetres - b.distanceMetres; })[0] || null;
+    }
+
+    function calculateAndDisplayDistance(origin) {
+      const requestId = ++activeDistanceRequest;
+      clearDistanceAndQuote();
+      if (!window.google?.maps?.DistanceMatrixService) {
+        console.error("[Echo Booking] Google driving-distance service unavailable.");
+        return;
+      }
       const service = new google.maps.DistanceMatrixService();
       service.getDistanceMatrix(
         {
           origins: [origin],
-          destinations: [aucklandCatchment, wellingtonCatchment],
-          travelMode: "DRIVING",
+          destinations: collectionCatchments.map(function (c) { return c.location; }),
+          travelMode: "DRIVING"
         },
         function (response, status) {
-          if (status !== "OK") {
-            alert("Error: Unable to calculate distance. Please try again.");
+          // Ignore old Maps responses if the customer changes their address.
+          if (requestId !== activeDistanceRequest) return;
+          if (status !== "OK" || !response || !response.rows ||
+              !response.rows[0] || !response.rows[0].elements) {
+            alert("Unable to calculate the collection distance. Please try again.");
+            clearDistanceAndQuote();
             return;
           }
 
-          const distances = response.rows[0].elements;
-          let distanceToAuckland = distances[0].distance
-            ? distances[0].distance.value / 1000
-            : null; // Distance in km
-          let distanceToWellington = distances[1].distance
-            ? distances[1].distance.value / 1000
-            : null; // Distance in km
-
-          console.log("test distance 1 = " + distanceToAuckland);
-          console.log("test distance 2 = " + distanceToWellington);
-          distanceToAuckland = parseInt(distanceToAuckland);
-          distanceToWellington = parseInt(distanceToWellington);
-
-          // Determine which catchment area is applicable
-          if (distanceToAuckland <= 50) {
-            console.log(
-              "User's location is within Auckland catchment area:",
-              distanceToAuckland.toFixed(2),
-              "km"
-            );
-            // Set catchment area logic here for Auckland
-            $("#distance").val(distanceToAuckland.toFixed(2) + "km");
-          } else {
-            if (distanceToWellington <= 50) {
-              console.log(
-                "User's location is within Wellington catchment area:",
-                distanceToWellington.toFixed(2),
-                "km"
-              );
-              // Set catchment area logic here for Wellington
-              $("#distance").val(distanceToWellington.toFixed(2) + "km");
-            } else {
-              alert("Sorry, we currently don't pick up at that location!");
-              $("#address").val("");
-              $("#post-code").val("");
-              $("#distance").val("");
-            }
+          const selected = selectNearestServiceCentre(response.rows[0].elements);
+          if (!selected) {
+            alert("Sorry, we currently don't pick up at that location!");
+            $("#address").val("");
+            $("#post-code").val("");
+            clearDistanceAndQuote();
+            return;
           }
 
-          // Optionally, adjust shipping cost and grand total if applicable
+          // Display the exact distance as two decimal places without
+          // truncating it before applying the 50-km catchment boundary.
+          $("#distance").val((selected.distanceMetres / 1000).toFixed(2) + "km");
           shippingCostAndGrandTotal();
         }
       );
     }
 
     function shippingCostAndGrandTotal() {
-      let distance = $("#distance").val();
-      distance = distance.substring(0, distance.length - 2); // Remove "km" from the end
-      let weight = $("#total-weight").val();
-      weight = weight.substring(0, weight.length - 2); // Remove "kg" from the end
-      var apiUrl = `https://echo-pricing-logic.vercel.app/shipping?distance=${distance}&weight=${weight}`;
-
-      $.get(apiUrl, function (response) {
-        $("#shipping-cost").val(response);
-        var totalPrice = parseFloat($("#total-price").val());
-        var grandTotal = totalPrice + parseFloat(response);
-        $("#grand-total").val(grandTotal);
+      const requestId = ++activeShippingQuote;
+      const km = Number.parseFloat($("#distance").val());
+      const kg = Number.parseFloat($("#total-weight").val());
+      const subtotal = Number($("#total-price").val());
+      if (!quoteReady || !Number.isFinite(km) || km < 0 || km > 50 ||
+          !Number.isFinite(kg) || kg < 0 ||
+          !Number.isSafeInteger(subtotal) || subtotal < 0) {
+        $("#shipping-cost, #grand-total").val("");
+        return;
+      }
+      const url = "https://echo-pricing-logic.vercel.app/shipping?distance=" +
+        encodeURIComponent(km) + "&weight=" + encodeURIComponent(kg);
+      $.get(url).done(function (response) {
+        if (requestId !== activeShippingQuote) return;
+        const cents = Number(response);
+        if (!Number.isSafeInteger(cents) || cents < 0) {
+          $("#shipping-cost, #grand-total").val("");
+          return;
+        }
+        $("#shipping-cost").val(cents);
+        $("#grand-total").val(subtotal + cents);
+      }).fail(function () {
+        if (requestId !== activeShippingQuote) return;
+        $("#shipping-cost, #grand-total").val("");
+        console.error("Unable to obtain the collection charge.");
       });
     }
 
@@ -656,18 +718,11 @@ $(document).ready(function () {
     }
 
     function isLocationInNewZealand(place) {
-      for (var i = 0; i < place.address_components.length; i++) {
-        var addressComponent = place.address_components[i];
-        for (var j = 0; j < addressComponent.types.length; j++) {
-          if (
-            addressComponent.types[j] === "country" &&
-            addressComponent.short_name !== "NZ"
-          ) {
-            return false;
-          }
-        }
-      }
-      return true;
+      const components = Array.isArray(place.address_components) ? place.address_components : [];
+      return components.some(function (part) {
+        return Array.isArray(part.types) &&
+          part.types.includes("country") && part.short_name === "NZ";
+      });
     }
 
     // Note: No longer needed as we use the Distance Matrix API now
@@ -694,7 +749,9 @@ $(document).ready(function () {
       });
 
       //if any of the .form-product-dropdown-title elements are clicked, update the height of the .form-product-dropdown element by adding the outer height of .form-product-dropdown-title and .form-product-dropdown-options inside of it, otherwise return back to the height of .form-product-dropdown-title
-      $(".form-product-dropdown-title").click(function () {
+      $(".form-product-dropdown-title")
+        .off("click.echoBookingDropdown")
+        .on("click.echoBookingDropdown", function () {
         var dropdown = $(this).closest(".form-product-dropdown");
         var dropdownOptions = dropdown.find(".form-product-dropdown-options");
 
@@ -854,7 +911,7 @@ $(document).ready(function () {
     }
 
     function isValidName(value) {
-      return /^[a-zA-Z ]+$/.test(value);
+      return typeof value === 'string' && /^[\p{L}\p{M}\s.'’-]+$/u.test(value.trim());
     }
 
     function isValidEmail(value) {
@@ -870,7 +927,7 @@ $(document).ready(function () {
     }
 
     function isChecked(value) {
-      return $("#" + value).hasClass("clicked");
+      return $("#" + value).is(":checked");
     }
 
     function isSelected(value) {
@@ -1047,6 +1104,15 @@ $(document).ready(function () {
         validations: ["bac-terms-and-conditions-checkbox"],
       },
     ];
+
+    function applicableFields(type) {
+      if (type === "Residential") return fieldsResidential;
+      return $("#contact-billing-same-checkbox").is(":checked")
+        ? fieldsCommercial.filter(function (field) {
+            return !field.id.startsWith("bac-contact-");
+          })
+        : fieldsCommercial;
+    }
 
     function generateValidationMessage(type, incompleteFields) {
       let baseMessage = `Note: To help us process your ${type.toLowerCase()} request efficiently, please make sure to complete `;
@@ -1229,8 +1295,7 @@ $(document).ready(function () {
         $("#collection-type").val() === "Residential"
           ? "Residential"
           : "Commercial";
-      const fields =
-        type === "Residential" ? fieldsResidential : fieldsCommercial;
+      const fields = applicableFields(type);
       validateFields(fields, type); // Now solely responsible for updating the UI based on validation
     }, 250);
 
@@ -1242,23 +1307,78 @@ $(document).ready(function () {
      *
      */
 
-    Webflow.push(function () {
-      // Disable submitting form fields during development
-      $("#bac-main-form").submit(function () {
+    {
+      // First page stores a draft; prevent Webflow from sending a premature
+      // native form submission (and duplicating any resulting automation).
+      const bookingForm = document.getElementById("bac-main-form");
+      bookingForm.addEventListener("submit", function (event) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
         //set the text of #bac-title to "Processing..."
         $("#bac-title").text("Processing...");
 
         // Serialize the form data or manually gather the data
+        const currentType = $("#collection-type").val() === "Commercial"
+          ? "Commercial" : "Residential";
+        const requiredFields = applicableFields(currentType);
+        if (validateFields(requiredFields, currentType) !== requiredFields.length) {
+          return false;
+        }
         var formData = $(this).serializeArray(); // Example serialization
 
         // Store formData in sessionStorage or handle as needed
+        // Do not advance while asynchronous item or route pricing is pending.
+        // The Review backend will independently re-quote all amounts.
+        if (!quoteReady || !Number.isSafeInteger(Number($("#grand-total").val())) ||
+            Number($("#grand-total").val()) < 50) {
+          alert("Please wait for the collection pricing to finish and check your address.");
+          return false;
+        }
         sessionStorage.setItem("formData", JSON.stringify(formData));
+
+        // The existing form remains unchanged; provide a structured draft
+        // for server-verified pricing and Stripe checkout on the Review page.
+        const fields = {};
+        $("#bac-main-form").find("input, select, textarea").each(function () {
+          if (!this.id) return;
+          fields[this.id] = this.type === "checkbox" || this.type === "radio"
+            ? this.checked === true
+            : this.value;
+        });
+        const items = [];
+        $(".form-product-option-counter.selected").each(function () {
+          const quantityEl = $(this).find(".quantity");
+          const id = quantityEl.attr("data-item-id");
+          const quantity = Number(quantityEl.text());
+          if (/^item(?:[1-9]|[12][0-9]|3[0-4])$/.test(id || "") &&
+              Number.isSafeInteger(quantity) && quantity > 0) {
+            items.push({ id, quantity });
+          }
+        });
+        const collectionType = $("#collection-type").val();
+        const draft = {
+          version: 2,
+          collectionType,
+          fields,
+          items,
+          addressSelection: {
+            placeId: selectedPlaceId || sessionStorage.getItem(PLACE_ID_STORAGE_KEY)
+          }
+        };
+        // Never manufacture missing address or item selections.
+        if (!draft.addressSelection.placeId || !items.length ||
+            !["Residential", "Commercial"].includes(collectionType)) {
+          alert("Please select a valid collection address and at least one item.");
+          $("#bac-title").text("Book A Collection");
+          return false;
+        }
+        sessionStorage.setItem("echo:new-booking:v2", JSON.stringify(draft));
 
         // Optionally, redirect to a review page or handle the data in another way
         window.location.href = "/booking-review"; // Change this to your review page URL
         return false;
-      });
-    });
+      }, true);
+    }
 
     /*
      *
@@ -1268,70 +1388,69 @@ $(document).ready(function () {
      *
      */
 
-    var storedFormData = sessionStorage.getItem("formData");
-    if (storedFormData) {
-      var formData = JSON.parse(storedFormData);
+    // Restore the real structured draft, not simulated dropdown/button clicks
+    // or a series of timeouts that can race the price API.
+    (function restoreBookingDraft() {
+      let draft;
+      try {
+        draft = JSON.parse(sessionStorage.getItem("echo:new-booking:v2") || "null");
+      } catch {
+        sessionStorage.removeItem("echo:new-booking:v2");
+        return;
+      }
+      if (!draft || draft.version !== 2 || !draft.fields ||
+          !Array.isArray(draft.items)) return;
 
-      formData.forEach(function (item) {
-        var input = $("[name='" + item.name + "'], [id='" + item.name + "']");
-        if (
-          input.attr("type") === "checkbox" ||
-          input.attr("type") === "radio"
-        ) {
-          input.filter('[value="' + item.value + '"]').prop("checked", true);
-        } else {
-          input.val(item.value);
-        }
-
-        if (input.hasClass("select-input") && input.val() == item.value) {
-          input.trigger("change");
-        }
-      });
-
-      if ($("#collection-type").val() === "Residential") {
-        $("#res-form-button").click();
-      } else if ($("#collection-type").val() === "Commercial") {
-        $("#com-form-button").click();
+      if (draft.collectionType === "Commercial") {
+        $("#com-form-button").trigger("click");
+      } else {
+        $("#res-form-button").trigger("click");
       }
 
-      setTimeout(function () {
-        var orderDetailsContent = formData.find(
-          (item) => item.name === "Selected-Items"
-        ).value;
-        $("#order-details").val("");
-        var orderLines = orderDetailsContent.split("\n");
+      for (const [id, value] of Object.entries(draft.fields)) {
+        if (id.startsWith("cf-")) continue;
+        const element = document.getElementById(id);
+        if (!element || !document.getElementById("bac-main-form").contains(element)) continue;
+        if (element.type === "checkbox" || element.type === "radio") {
+          if (element.checked !== Boolean(value)) element.click();
+          else $(element).trigger("change");
+        } else if (typeof value === "string" || typeof value === "number") {
+          if (element._flatpickr && /^\d{2}\/\d{2}\/\d{4}$/.test(String(value))) {
+            element._flatpickr.setDate(String(value), false, "d/m/Y");
+          } else {
+            $(element).val(value);
+          }
+        }
+      }
 
-        orderLines.forEach(function (line) {
-          var parts = line.split(", ");
-          var itemName = parts[0].trim();
-          var quantity = parseInt(parts[2]);
+      const previousPlaceId = draft.addressSelection?.placeId;
+      if (typeof previousPlaceId === "string" && previousPlaceId) {
+        selectedPlaceId = previousPlaceId;
+        selectedFromAutocomplete = true;
+        sessionStorage.setItem(PLACE_ID_STORAGE_KEY, previousPlaceId);
+      }
 
-          $(".form-product-option").each(function () {
-            var itemNameElement = $(this).find(".item-name").text().trim();
-            if (itemNameElement === itemName) {
-              var addButton = $(this).find(".counter-add:not(.disable)");
-              var existingQuantity = parseInt($(this).find(".quantity").text());
-              var totalQuantity = existingQuantity + quantity;
-              $(this).find(".quantity").text(totalQuantity);
-              updateCounterButtons($(this).find(".quantity"));
-            }
-          });
-        });
+      const quantities = new Map(
+        draft.items.filter(item => /^item(?:[1-9]|[12][0-9]|3[0-4])$/.test(item.id) &&
+          Number.isSafeInteger(item.quantity) && item.quantity > 0 && item.quantity <= 999)
+          .map(item => [item.id, item.quantity])
+      );
+      countersInitializing = true;
+      $(".quantity").each(function () {
+        const q = quantities.get($(this).attr("data-item-id")) || 0;
+        $(this).text(q);
+        updateCounterButtons($(this));
+      });
+      countersInitializing = false;
+      updateTotal();
+    })();
 
-        setTimeout(function () {
-          $(".form-product-dropdown-title").click();
-          setTimeout(function () {
-            $(".form-product-dropdown-title").click();
-            $("#order-details").val("");
-            setTimeout(function () {
-              $("#counter-add-test").click();
-              setTimeout(function () {
-                $("#counter-sub-test").click();
-              }, 500);
-            }, 100);
-          }, 100);
-        }, 500);
-      }, 100);
-    }
   }
-});
+  }
+  // Embed elements can execute before jquery.js and webflow.js are loaded.
+  // Webflow.push is the primary readiness signal; window.load is a fallback.
+  window.Webflow = window.Webflow || [];
+  window.Webflow.push(initializeEchoBooking);
+  if (document.readyState === "complete") initializeEchoBooking();
+  else window.addEventListener("load", initializeEchoBooking, {once:true});
+})();

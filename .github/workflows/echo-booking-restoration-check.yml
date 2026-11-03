@@ -1,0 +1,25 @@
+name: Echo booking restoration checks
+on:
+  push:
+    branches: [fix/echo-booking-restoration-20261103]
+  pull_request:
+    paths:
+      - 'new-booking-code/**'
+      - '.github/workflows/echo-booking-restoration-check.yml'
+jobs:
+  syntax-and-regions:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: node --check new-booking-code/booking-v2.js
+      - run: node --check new-booking-code/review-restore.js
+      - run: node --check new-booking-code/native-receipt-restore.js
+      - run: node --check new-booking-code/confirmation-restore.js
+      - run: node --test new-booking-code/*.test.cjs
