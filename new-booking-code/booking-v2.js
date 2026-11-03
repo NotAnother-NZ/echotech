@@ -561,69 +561,75 @@ $(document).ready(function () {
       calculateAndDisplayDistance(place.geometry.location);
     }
 
-    function calculateAndDisplayDistance(origin) {
-      const aucklandCatchment = new google.maps.LatLng(
-        -36.9249524,
-        174.8192662
-      );
-      const wellingtonCatchment = new google.maps.LatLng(
-        -41.2370845,
-        174.9130315
-      );
+    /*
+     * Collection catchments. Preserve original Auckland/Wellington depots
+     * and the Christchurch coverage added after the original v2 release.
+     * Google Distance Matrix values are in metres, not rounded kilometres.
+     */
+    const collectionCatchments = [
+      { name: "Auckland", location: new google.maps.LatLng(-36.9249524, 174.8192662) },
+      { name: "Wellington", location: new google.maps.LatLng(-41.2370845, 174.9130315) },
+      { name: "Christchurch", location: new google.maps.LatLng(-43.5320544, 172.6362254) }
+    ];
+    let activeDistanceRequest = 0;
 
+    function clearDistanceAndQuote() {
+      $("#distance").val("");
+      $("#shipping-cost").val("");
+      $("#grand-total").val("");
+    }
+
+    function selectNearestServiceCentre(elements) {
+      if (!Array.isArray(elements)) return null;
+      return elements
+        .map(function (element, index) {
+          return {
+            centre: collectionCatchments[index],
+            distanceMetres: element && element.distance && element.distance.value,
+            status: element && element.status
+          };
+        })
+        .filter(function (entry) {
+          return entry.centre && entry.status === "OK" &&
+            Number.isFinite(entry.distanceMetres) &&
+            entry.distanceMetres >= 0 &&
+            entry.distanceMetres <= 50000;
+        })
+        .sort(function (a, b) { return a.distanceMetres - b.distanceMetres; })[0] || null;
+    }
+
+    function calculateAndDisplayDistance(origin) {
+      const requestId = ++activeDistanceRequest;
+      clearDistanceAndQuote();
       const service = new google.maps.DistanceMatrixService();
       service.getDistanceMatrix(
         {
           origins: [origin],
-          destinations: [aucklandCatchment, wellingtonCatchment],
-          travelMode: "DRIVING",
+          destinations: collectionCatchments.map(function (c) { return c.location; }),
+          travelMode: "DRIVING"
         },
         function (response, status) {
-          if (status !== "OK") {
-            alert("Error: Unable to calculate distance. Please try again.");
+          // Ignore old Maps responses if the customer changes their address.
+          if (requestId !== activeDistanceRequest) return;
+          if (status !== "OK" || !response || !response.rows ||
+              !response.rows[0] || !response.rows[0].elements) {
+            alert("Unable to calculate the collection distance. Please try again.");
+            clearDistanceAndQuote();
             return;
           }
 
-          const distances = response.rows[0].elements;
-          let distanceToAuckland = distances[0].distance
-            ? distances[0].distance.value / 1000
-            : null; // Distance in km
-          let distanceToWellington = distances[1].distance
-            ? distances[1].distance.value / 1000
-            : null; // Distance in km
-
-          console.log("test distance 1 = " + distanceToAuckland);
-          console.log("test distance 2 = " + distanceToWellington);
-          distanceToAuckland = parseInt(distanceToAuckland);
-          distanceToWellington = parseInt(distanceToWellington);
-
-          // Determine which catchment area is applicable
-          if (distanceToAuckland <= 50) {
-            console.log(
-              "User's location is within Auckland catchment area:",
-              distanceToAuckland.toFixed(2),
-              "km"
-            );
-            // Set catchment area logic here for Auckland
-            $("#distance").val(distanceToAuckland.toFixed(2) + "km");
-          } else {
-            if (distanceToWellington <= 50) {
-              console.log(
-                "User's location is within Wellington catchment area:",
-                distanceToWellington.toFixed(2),
-                "km"
-              );
-              // Set catchment area logic here for Wellington
-              $("#distance").val(distanceToWellington.toFixed(2) + "km");
-            } else {
-              alert("Sorry, we currently don't pick up at that location!");
-              $("#address").val("");
-              $("#post-code").val("");
-              $("#distance").val("");
-            }
+          const selected = selectNearestServiceCentre(response.rows[0].elements);
+          if (!selected) {
+            alert("Sorry, we currently don't pick up at that location!");
+            $("#address").val("");
+            $("#post-code").val("");
+            clearDistanceAndQuote();
+            return;
           }
 
-          // Optionally, adjust shipping cost and grand total if applicable
+          // Display the exact distance as two decimal places without
+          // truncating it before applying the 50-km catchment boundary.
+          $("#distance").val((selected.distanceMetres / 1000).toFixed(2) + "km");
           shippingCostAndGrandTotal();
         }
       );
