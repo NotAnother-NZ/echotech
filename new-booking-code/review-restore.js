@@ -368,7 +368,18 @@
   $('back-to-booking')?.addEventListener('click',e=>{
     if(guard){e.preventDefault();status('Please keep this page open while your booking is being confirmed.');}
   });
-  show('bac-pay',false);show('bac-submit',false);
-  status('');
-  load();
+  // Webflow initialises form handlers late in the document. Run Review
+  // only after Webflow is ready so native receipts are intercepted correctly.
+  function start() {
+    show('bac-pay',false);show('bac-submit',false);
+    status('');
+    load();
+  }
+  if (window.Webflow && typeof window.Webflow.push === 'function') {
+    window.Webflow.push(start);
+  } else if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded',start,{once:true});
+  } else {
+    start();
+  }
 })();
