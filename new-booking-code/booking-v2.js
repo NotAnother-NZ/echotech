@@ -1,4 +1,12 @@
-$(document).ready(function () {
+/* Echo Booking Page 1: wait for Webflow's jQuery/runtime after inline Embed. */
+(() => {
+  "use strict";
+  let echoBookingInitialized = false;
+  function initializeEchoBooking() {
+    if (echoBookingInitialized || !window.jQuery ||
+        !document.getElementById("bac-form-wrapper-new")) return;
+    echoBookingInitialized = true;
+    const $ = window.jQuery;
   //if #bac-form-wrapper is available
   let copyTimes = 0;
   if ($("#bac-form-wrapper-new").length) {
@@ -299,11 +307,16 @@ $(document).ready(function () {
 
     //go through all the .quantity elements, and give them an attribute of data-item-id starting from item1
     $(".quantity").each(function (index) {
-      // Preserve item IDs supplied by Webflow; use the original positional
-      // fallback only for older layouts without explicit item identifiers.
+      // Product IDs come from the associated Webflow item, not DOM position.
       const declaredId = $(this).attr("data-item-id");
-      if (!/^item(?:[1-9]|[12][0-9]|3[0-4])$/.test(declaredId || "")) {
-        $(this).attr("data-item-id", "item" + (index + 1));
+      const displayedItemId = $(this).closest(".form-product-option")
+        .find(".item-name[id]").first().attr("id");
+      const candidate = /^item(?:[1-9]|[12][0-9]|3[0-4])$/.test(declaredId || "")
+        ? declaredId : displayedItemId;
+      if (/^item(?:[1-9]|[12][0-9]|3[0-4])$/.test(candidate || "")) {
+        $(this).attr("data-item-id", candidate);
+      } else {
+        console.error("[Echo Booking] Missing product ID at counter index",index);
       }
     });
 
@@ -319,7 +332,9 @@ $(document).ready(function () {
     // Older per-item callbacks could overwrite a newer selection and produce
     // incorrect weights or totals when customers changed quantities quickly.
     let activeItemQuote = 0;
+    let activeShippingQuote = 0;
     let quoteReady = false;
+    let countersInitializing = true;
     async function updateTotal() {
       const requestId = ++activeItemQuote;
       ++activeShippingQuote;
@@ -435,8 +450,8 @@ $(document).ready(function () {
         counterAdd.removeClass("disable");
       }
 
-      // Update total cost and weight
-      updateTotal();
+      // Batch initial counter state; the first quote is calculated once.
+      if (!countersInitializing) updateTotal();
     }
 
     // Click event handler for counter subtract button
@@ -518,6 +533,8 @@ $(document).ready(function () {
     $(".quantity").each(function () {
       updateCounterButtons($(this));
     });
+    countersInitializing = false;
+    updateTotal();
 
     /*
      *
@@ -663,7 +680,6 @@ $(document).ready(function () {
       );
     }
 
-    let activeShippingQuote = 0;
     function shippingCostAndGrandTotal() {
       const requestId = ++activeShippingQuote;
       const km = Number.parseFloat($("#distance").val());
@@ -1432,4 +1448,11 @@ $(document).ready(function () {
       }, 100);
     }
   }
-});
+  }
+  // Embed elements can execute before jquery.js and webflow.js are loaded.
+  // Webflow.push is the primary readiness signal; window.load is a fallback.
+  window.Webflow = window.Webflow || [];
+  window.Webflow.push(initializeEchoBooking);
+  if (document.readyState === "complete") initializeEchoBooking();
+  else window.addEventListener("load", initializeEchoBooking, {once:true});
+})();
