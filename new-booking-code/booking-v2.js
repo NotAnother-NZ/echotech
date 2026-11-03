@@ -315,84 +315,86 @@ $(document).ready(function () {
     // Initialize an empty array to store unique item IDs
     var uniqueItemIds = [];
 
-    // Function to update total cost and weight
-    function updateTotal() {
+    // Calculate all item lines together, then commit one consistent quote.
+    // Older per-item callbacks could overwrite a newer selection and produce
+    // incorrect weights or totals when customers changed quantities quickly.
+    let activeItemQuote = 0;
+    let quoteReady = false;
+    async function updateTotal() {
+      const requestId = ++activeItemQuote;
+      quoteReady = false;
       totalCost = 0;
       totalWeight = 0;
       orderDetails = [];
       uniqueItemIds = [];
+      $("#total-price, #shipping-cost, #grand-total").val("");
 
-      const selectedItemsSet = new Set();
-
+      const selected = [];
       $(".form-product-option-counter.selected").each(function () {
-        var itemId = $(this).find(".quantity").attr("data-item-id");
-        var quantity = parseInt($(this).find(".quantity").text());
-
-        if (uniqueItemIds.indexOf(itemId) === -1) {
-          uniqueItemIds.push(itemId);
+        const counter = $(this);
+        const quantityEl = counter.find(".quantity");
+        const id = quantityEl.attr("data-item-id");
+        const quantity = Number(quantityEl.text());
+        if (/^item(?:[1-9]|[12][0-9]|3[0-4])$/.test(id || "") &&
+            Number.isSafeInteger(quantity) && quantity > 0 && quantity <= 999) {
+          selected.push({id, quantity, counter});
         }
-
-        var apiUrl = `https://echo-pricing-logic.vercel.app/item?id=${itemId}&quantity=${quantity}`;
-
-        var self = this;
-
-        $(this).find(".counter-add, .counter-sub").addClass("disable");
-
-        $.get(apiUrl, function (response) {
-          var [price, weight, name] = response.split(", ");
-          totalCost += parseInt(price);
-          totalWeight += parseInt(weight);
-
-          if (!selectedItemsSet.has(name)) {
-            selectedItemsSet.add(name);
-            orderDetails.push({
-              itemName: name,
-              unitPrice: "$" + parseInt(price) / quantity,
-              quantity: quantity + "x",
-              price: "$" + price,
-            });
-          }
-
-          $("#total-cost").text(totalCost.toFixed(2));
-          $("#total-weight").text(totalWeight);
-
-          var formattedOrderDetails = orderDetails.map(function (item) {
-            return (
-              item.itemName +
-              ", " +
-              item.unitPrice +
-              ", " +
-              item.quantity +
-              ", " +
-              item.price
-            );
-          });
-
-          $("#order-details").val(formattedOrderDetails.join("\n"));
-          $("#total-price").val(totalCost * 100);
-          $("#total-weight").val(totalWeight + "kg");
-
-          shippingCostAndGrandTotal();
-
-          $(self).find(".counter-add, .counter-sub").removeClass("disable");
-
-          $("#total-unique-items").val(uniqueItemIds.length);
-          copyTimes = uniqueItemIds.length;
-        }).fail(function () {
-          console.error("Failed to fetch item details for", itemId);
-          $(self).find(".counter-add, .counter-sub").removeClass("disable");
-        });
       });
-
-      if ($(".form-product-option-counter.selected").length === 0) {
+      if (!selected.length) {
         $("#order-details").val("");
-        $("#total-cost").val("");
+        $("#total-cost").text("0.00");
         $("#total-weight").val("");
-        $("#total-price").val("");
-        $("#shipping-cost").val("");
-        $("#grand-total").val("");
-        $("#distance").val("");
         $("#total-unique-items").val("0");
+        copyTimes = 0;
+        return;
+      }
+
+      selected.forEach(line => line.counter.find(".counter-add, .counter-sub").addClass("disable"));
+      try {
+        const data = await Promise.all(selected.map(async function (line) {
+          const url = "https://echo-pricing-logic.vercel.app/item?id=" +
+            encodeURIComponent(line.id) + "&quantity=" + line.quantity;
+          const response = await $.get(url);
+          const parts = String(response).split(", ");
+          const amount = Number(parts[0]);
+          const weight = Number(parts[1]);
+          const name = parts.slice(2).join(", ").trim();
+          if (!Number.isFinite(amount) || amount < 0 ||
+              !Number.isFinite(weight) || weight < 0 || !name) {
+            throw new Error("The collection item pricing response is invalid.");
+          }
+          return {id:line.id,quantity:line.quantity,amount,weight,name};
+        }));
+        if (requestId !== activeItemQuote) return;
+
+        totalCost = data.reduce((sum,item) => sum + item.amount,0);
+        totalWeight = data.reduce((sum,item) => sum + item.weight,0);
+        orderDetails = data.map(item => ({
+          itemName:item.name,
+          unitPrice:"$" + (item.amount / item.quantity).toFixed(2),
+          quantity:item.quantity + "x",
+          price:"$" + item.amount.toFixed(2)
+        }));
+        uniqueItemIds = data.map(item => item.id);
+
+        $("#total-cost").text(totalCost.toFixed(2));
+        $("#total-weight").val(totalWeight + "kg");
+        $("#order-details").val(orderDetails.map(item => [
+          item.itemName,item.unitPrice,item.quantity,item.price
+        ].join(", ")).join("\n"));
+        $("#total-price").val(Math.round(totalCost * 100));
+        $("#total-unique-items").val(uniqueItemIds.length);
+        copyTimes = uniqueItemIds.length;
+        quoteReady = true;
+        shippingCostAndGrandTotal();
+      } catch (error) {
+        if (requestId !== activeItemQuote) return;
+        quoteReady = false;
+        $("#total-price, #shipping-cost, #grand-total").val("");
+        console.error("Unable to calculate item quote:",error.message);
+        alert("We couldn't calculate the selected items. Please try again.");
+      } finally {
+        selected.forEach(line => line.counter.find(".counter-add, .counter-sub").removeClass("disable"));
       }
     }
 
@@ -655,18 +657,33 @@ $(document).ready(function () {
       );
     }
 
+    let activeShippingQuote = 0;
     function shippingCostAndGrandTotal() {
-      let distance = $("#distance").val();
-      distance = distance.substring(0, distance.length - 2); // Remove "km" from the end
-      let weight = $("#total-weight").val();
-      weight = weight.substring(0, weight.length - 2); // Remove "kg" from the end
-      var apiUrl = `https://echo-pricing-logic.vercel.app/shipping?distance=${distance}&weight=${weight}`;
-
-      $.get(apiUrl, function (response) {
-        $("#shipping-cost").val(response);
-        var totalPrice = parseFloat($("#total-price").val());
-        var grandTotal = totalPrice + parseFloat(response);
-        $("#grand-total").val(grandTotal);
+      const requestId = ++activeShippingQuote;
+      const km = Number.parseFloat($("#distance").val());
+      const kg = Number.parseFloat($("#total-weight").val());
+      const subtotal = Number($("#total-price").val());
+      if (!quoteReady || !Number.isFinite(km) || km < 0 || km > 50 ||
+          !Number.isFinite(kg) || kg < 0 ||
+          !Number.isSafeInteger(subtotal) || subtotal < 0) {
+        $("#shipping-cost, #grand-total").val("");
+        return;
+      }
+      const url = "https://echo-pricing-logic.vercel.app/shipping?distance=" +
+        encodeURIComponent(km) + "&weight=" + encodeURIComponent(kg);
+      $.get(url).done(function (response) {
+        if (requestId !== activeShippingQuote) return;
+        const cents = Number(response);
+        if (!Number.isSafeInteger(cents) || cents < 0) {
+          $("#shipping-cost, #grand-total").val("");
+          return;
+        }
+        $("#shipping-cost").val(cents);
+        $("#grand-total").val(subtotal + cents);
+      }).fail(function () {
+        if (requestId !== activeShippingQuote) return;
+        $("#shipping-cost, #grand-total").val("");
+        console.error("Unable to obtain the collection charge.");
       });
     }
 
@@ -1278,6 +1295,13 @@ $(document).ready(function () {
         var formData = $(this).serializeArray(); // Example serialization
 
         // Store formData in sessionStorage or handle as needed
+        // Do not advance while asynchronous item or route pricing is pending.
+        // The Review backend will independently re-quote all amounts.
+        if (!quoteReady || !Number.isSafeInteger(Number($("#grand-total").val())) ||
+            Number($("#grand-total").val()) < 50) {
+          alert("Please wait for the collection pricing to finish and check your address.");
+          return false;
+        }
         sessionStorage.setItem("formData", JSON.stringify(formData));
 
         // The existing form remains unchanged; provide a structured draft
