@@ -903,7 +903,7 @@ $(document).ready(function () {
     }
 
     function isValidName(value) {
-      return /^[a-zA-Z ]+$/.test(value);
+      return typeof value === 'string' && /^[\p{L}\p{M}\s.'’-]+$/u.test(value.trim());
     }
 
     function isValidEmail(value) {
@@ -919,7 +919,7 @@ $(document).ready(function () {
     }
 
     function isChecked(value) {
-      return $("#" + value).hasClass("clicked");
+      return $("#" + value).is(":checked");
     }
 
     function isSelected(value) {
